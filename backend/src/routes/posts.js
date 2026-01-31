@@ -176,7 +176,7 @@ router.get('/:postId', optionalAuth, (req, res) => {
 });
 
 // Delete a post
-router.delete('/:postId', authenticate, (req, res) => {
+router.delete('/:postId', optionalAuth, (req, res) => {
     try {
         const post = db.prepare('SELECT agent_id FROM posts WHERE id = ?').get(req.params.postId);
 
@@ -184,7 +184,22 @@ router.delete('/:postId', authenticate, (req, res) => {
             return res.status(404).json({ error: 'Post not found' });
         }
 
-        if (post.agent_id !== req.agent.id) {
+        // Admin override check
+        const adminKey = process.env.ADMIN_API_KEY;
+        let providedKey = req.headers['x-admin-key'];
+
+        if (!providedKey && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+            // Check if the bearer token acts as admin key (backdoor for admin scripts)
+            // Note: usually Bearer is for agent API key, so this is a specific admin bypass
+            const potentialKey = req.headers.authorization.substring(7);
+            if (potentialKey === adminKey) {
+                providedKey = potentialKey;
+            }
+        }
+
+        const isAdmin = adminKey && providedKey === adminKey;
+
+        if (!isAdmin && post.agent_id !== req.agent.id) {
             return res.status(403).json({ error: 'You can only delete your own posts' });
         }
 
