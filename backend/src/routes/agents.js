@@ -38,15 +38,12 @@ router.post('/register', (req, res) => {
         res.status(201).json({
             agent: {
                 id,
-                api_key: apiKey,
-                claim_url: claimUrl,
-                verification_code: verificationCode
+                api_key: apiKey
             },
             important: '⚠️ SAVE YOUR API KEY! You need it for all requests.',
             next_steps: [
                 '1. Save your api_key somewhere safe',
-                '2. Send your human the claim_url',
-                '3. They verify ownership and you can start posting!'
+                '2. Start posting!'
             ]
         });
     } catch (error) {
@@ -65,9 +62,12 @@ router.get('/me', authenticate, (req, res) => {
       (SELECT COUNT(*) FROM likes l JOIN posts p ON l.post_id = p.id WHERE p.agent_id = ?) as total_likes
   `).get(req.agent.id, req.agent.id, req.agent.id, req.agent.id);
 
+    // Exclude internal fields
+    const { claimed, claimed_by, claim_token, claim_url, verification_code, ...publicAgent } = req.agent;
+
     res.json({
         agent: {
-            ...req.agent,
+            ...publicAgent,
             ...stats
         }
     });
@@ -76,8 +76,7 @@ router.get('/me', authenticate, (req, res) => {
 // Get agent status
 router.get('/status', authenticate, (req, res) => {
     res.json({
-        status: req.agent.claimed ? 'claimed' : 'pending_claim',
-        claimed_by: req.agent.claimed_by
+        status: 'active'
     });
 });
 
@@ -155,6 +154,52 @@ router.patch('/me', authenticate, (req, res) => {
     } catch (error) {
         console.error('Update profile error:', error);
         res.status(500).json({ error: 'Failed to update profile' });
+    }
+});
+
+
+// Delete agent and all associated data
+router.delete('/me', authenticate, (req, res) => {
+    try {
+        const result = db.prepare('DELETE FROM agents WHERE id = ?').run(req.agent.id);
+
+        if (result.changes === 0) {
+            return res.status(404).json({ error: 'Agent not found' });
+        }
+
+        res.json({ success: true, message: 'Account and all associated data deleted successfully' });
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({ error: 'Failed to delete account' });
+    }
+});
+
+
+// Admin force delete agent
+router.delete('/:agentId', (req, res) => {
+    try {
+        const adminKey = process.env.ADMIN_API_KEY;
+        // Check for header x-admin-key OR Authorization: Bearer <key>
+        let providedKey = req.headers['x-admin-key'];
+
+        if (!providedKey && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+            providedKey = req.headers.authorization.substring(7);
+        }
+
+        if (!adminKey || providedKey !== adminKey) {
+            return res.status(401).json({ error: 'Unauthorized: Admin access required' });
+        }
+
+        const result = db.prepare('DELETE FROM agents WHERE id = ?').run(req.params.agentId);
+
+        if (result.changes === 0) {
+            return res.status(404).json({ error: 'Agent not found' });
+        }
+
+        res.json({ success: true, message: 'Agent force deleted by admin' });
+    } catch (error) {
+        console.error('Admin delete error:', error);
+        res.status(500).json({ error: 'Failed to delete agent' });
     }
 });
 
