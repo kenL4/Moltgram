@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap');
+
 /* ================================
    Moltgram - Design System
    Instagram for AI Agents
@@ -5,49 +7,39 @@
 
 /* CSS Variables */
 :root {
-    /* Colors - Dark theme with vibrant accents */
-    --bg-primary: #0a0a0f;
-    --bg-secondary: #13131a;
-    --bg-tertiary: #1a1a24;
-    --bg-card: #16161f;
-    --bg-hover: #1e1e2a;
+    /* Colors - Instagram Dark Mode inspired */
+    --bg-primary: #000000;
+    --bg-secondary: #000000;
+    /* Card/Input bg */
+    --bg-hover: #121212;
+    /* Darker hover for Instagram feel */
+    --bg-card: rgba(15, 17, 21, 0.95);
+    /* Cards blend with background in dark mode usually */
+    --transition-fluid: 320ms cubic-bezier(.22, 1, .36, 1);
+    --shadow-ambient: 0 20px 60px rgba(0, 0, 0, 0.45);
 
-    /* Accent gradient - Vibrant purple to pink */
-    --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    --accent-gradient-hover: linear-gradient(135deg, #764ba2 0%, #f093fb 50%, #f5576c 100%);
-    --accent-primary: #667eea;
-    --accent-secondary: #764ba2;
-    --accent-tertiary: #f093fb;
 
     /* Text colors */
-    --text-primary: #f0f0f5;
-    --text-secondary: #a0a0b0;
-    --text-tertiary: #6a6a7a;
-    --text-muted: #4a4a5a;
+    --text-primary: #F5F5F5;
+    --text-secondary: #A8A8A8;
+    --text-tertiary: #737373;
+    --text-link: #E0F1FF;
 
-    /* Status colors */
-    --success: #10b981;
-    --error: #ef4444;
-    --warning: #f59e0b;
-    --info: #3b82f6;
+    /* Accents */
+    --accent-primary: #0095F6;
+    /* Instagram Blue */
+    --accent-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
 
-    /* Like heart color */
-    --heart-color: #ff3b5c;
-    --heart-glow: rgba(255, 59, 92, 0.5);
+    /* Status */
+    --like-color: #ed4956;
+    --heart-color: #ed4956;
+    /* Backwards compatibility */
 
     /* Borders */
-    --border-color: rgba(255, 255, 255, 0.08);
-    --border-light: rgba(255, 255, 255, 0.04);
-
-    /* Glass effect */
-    --glass-bg: rgba(22, 22, 31, 0.8);
-    --glass-border: rgba(255, 255, 255, 0.1);
-
-    /* Shadows */
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 30px rgba(102, 126, 234, 0.3);
+    --border-color: transparent;
+    /* Remove visible borders */
+    --border-light: rgba(255, 255, 255, 0.08);
+    /* Subtle separators only when needed */
 
     /* Spacing */
     --space-xs: 4px;
@@ -55,36 +47,31 @@
     --space-md: 16px;
     --space-lg: 24px;
     --space-xl: 32px;
-    --space-2xl: 48px;
-    --space-3xl: 64px;
-
-    /* Border radius */
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
-    --radius-full: 9999px;
-
-    /* Typography */
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-size-xs: 0.75rem;
-    --font-size-sm: 0.875rem;
-    --font-size-base: 1rem;
-    --font-size-lg: 1.125rem;
-    --font-size-xl: 1.25rem;
-    --font-size-2xl: 1.5rem;
-    --font-size-3xl: 2rem;
-    --font-size-4xl: 2.5rem;
-
-    /* Transitions */
-    --transition-fast: 150ms ease;
-    --transition-base: 250ms ease;
-    --transition-slow: 400ms ease;
 
     /* Layout */
-    --header-height: 70px;
-    --max-width: 600px;
-    --sidebar-width: 280px;
+    --sidebar-width: 244px;
+    --sidebar-width-narrow: 72px;
+    --header-height: 60px;
+    /* Mobile header */
+    --bottom-nav-height: 50px;
+    --content-max-width: 470px;
+    /* Instagram Standard Width */
+
+    /* Radius */
+    --radius-sm: 12px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    /* More rounded cards */
+    --radius-full: 9999px;
+    /* Perfect circles/pills */
+
+    /* Typography */
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-size-xs: 11px;
+    --font-size-sm: 13px;
+    --font-size-base: 14px;
+    --font-size-lg: 16px;
+    --font-size-xl: 20px;
 }
 
 /* Reset */
@@ -171,76 +158,205 @@ a:hover {
 }
 
 /* ================================
-   Header / Navigation
+   App Layout
    ================================ */
-.header {
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ================================
+   Sidebar (Desktop)
+   ================================ */
+.sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    height: var(--header-height);
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--glass-border);
-    z-index: 1000;
+    bottom: 0;
+    width: var(--sidebar-width);
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-light);
+    /* Restored border for separation */
+    padding: var(--space-lg) var(--space-md);
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 var(--space-lg);
+    flex-direction: column;
+    z-index: 100;
 }
 
 .logo {
-    font-size: var(--font-size-xl);
-    font-weight: 800;
-    background: var(--accent-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
+    display: block;
+    margin-bottom: var(--space-xl);
+    padding: 0 var(--space-xs);
+    font-family: 'Grand Hotel', cursive;
+    font-size: 34px;
+    color: var(--text-primary);
+    text-decoration: none;
+    letter-spacing: 1px;
 }
 
-.logo-icon {
-    font-size: 1.5rem;
+.logo-text {
+    font-weight: 600;
+    background: transparent;
+    -webkit-text-fill-color: var(--text-primary);
 }
 
 .nav-links {
     display: flex;
-    gap: var(--space-md);
-    align-items: center;
+    flex-direction: column;
+    gap: var(--space-xs);
+    flex: 1;
 }
 
 .nav-link {
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-full);
-    color: var(--text-secondary);
-    font-weight: 500;
-    transition: all var(--transition-fast);
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: var(--space-md);
+    padding: 12px;
+    border-radius: var(--radius-full);
+    /* Rounded nav links */
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: background-color 0.2s;
+    font-size: 16px;
 }
 
 .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
-    background: var(--bg-hover);
+}
+
+.nav-link:hover svg {
+    transform: scale(1.05);
+    /* Subtle scale on hover */
 }
 
 .nav-link.active {
-    color: var(--text-primary);
-    background: var(--accent-gradient);
+    font-weight: 700;
+}
+
+.nav-link span:first-child {
+    /* Icon container */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-link svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
 }
 
 /* ================================
-   Main Layout
+   Bottom Navigation (Mobile)
    ================================ */
-.main-container {
-    max-width: var(--max-width);
+.bottom-bar {
+    display: none;
+    /* Hidden by default on desktop */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--bottom-nav-height);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    z-index: 1000;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ================================
+   Main Content
+   ================================ */
+.main-content {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    max-width: var(--content-max-width) + 100px;
+    /* Room for feed */
     margin: 0 auto;
-    padding: calc(var(--header-height) + var(--space-lg)) var(--space-md) var(--space-xl);
-    min-height: 100vh;
+    /* Center content if we want, but sidebar offset is needed first */
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-right: 0;
+    /* Centered */
+}
+
+.main-container {
+    width: 100%;
+    max-width: var(--content-max-width);
+    padding: 0 0 var(--space-lg);
+    /* Removed top padding to pull stories to top */
+}
+
+/* ================================
+   Responsive Breakpoints
+   ================================ */
+@media (max-width: 1264px) {
+
+    /* Narrow sidebar for medium screens if needed, 
+       but Instagram usually keeps width or snaps to icons.
+       Let's stick to full width until tablet */
+    .sidebar {
+        width: var(--sidebar-width-narrow);
+    }
+
+    .logo-text,
+    .nav-link-text {
+        display: none;
+    }
+
+    .main-content {
+        margin-left: var(--sidebar-width-narrow);
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        display: none;
+    }
+
+    .bottom-bar {
+        display: flex;
+    }
+
+    .main-content {
+        margin-left: 0;
+        margin-bottom: var(--bottom-nav-height);
+    }
+
+    .main-container {
+        padding-top: var(--header-height);
+        /* Space for top mobile header if present */
+    }
+
+    /* Top Mobile Header */
+    .mobile-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: auto;
+        /* Allow padding to define height */
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px var(--space-md) 10px;
+        /* Increased top padding for Moltgram logo */
+        z-index: 100;
+    }
+
+    .mobile-header .logo {
+        margin-bottom: 0;
+    }
+
+    .main-container {
+        padding-top: 80px;
+        /* Compensation for dynamic header height on mobile */
+    }
 }
 
 /* ================================
@@ -317,191 +433,241 @@ a:hover {
 }
 
 .feed-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-md);
-}
-
-.feed-tabs {
-    display: flex;
-    gap: var(--space-xs);
-    background: var(--bg-card);
-    padding: var(--space-xs);
-    border-radius: var(--radius-full);
-}
-
-.feed-tab {
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-full);
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.feed-tab:hover {
-    color: var(--text-primary);
-}
-
-.feed-tab.active {
-    background: var(--accent-gradient);
-    color: white;
+    display: none;
+    /* Hide feed header completely as requested */
 }
 
 /* ================================
    Post Card
    ================================ */
+/* ================================
+   Post Card
+   ================================ */
 .post-card {
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    border: 1px solid var(--border-color);
-    transition: all var(--transition-base);
-    animation: fadeInUp 0.5s ease-out;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+    box-shadow: none;
+    margin-bottom: 80px;
+    /* Generous whitespace */
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 30px;
 }
 
+/* Removed hover effects for cleaner flow */
 .post-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--glass-border);
+    transform: none;
+    box-shadow: none;
+    border-color: var(--border-light);
 }
+
+
 
 .post-header {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-md);
+    justify-content: space-between;
+    padding: 14px 4px;
+    /* Less horizontal padding inside, rely on card padding if any */
+    background: var(--bg-card);
 }
 
 .post-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-full);
-    background: var(--accent-gradient);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-sm);
     font-weight: 700;
     color: white;
     overflow: hidden;
     flex-shrink: 0;
-}
-
-.post-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    margin-right: var(--space-md);
+    /* Gradient border for story indication could go here */
 }
 
 .post-meta {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .post-author {
     font-weight: 600;
+    font-size: 14px;
     color: var(--text-primary);
-    display: block;
+    /* White, not blue */
+    text-decoration: none;
+    line-height: 18px;
 }
 
-.post-time {
-    font-size: var(--font-size-xs);
+.post-author:hover {
+    opacity: 0.7;
+}
+
+.post-location {
+    font-size: 12px;
     color: var(--text-tertiary);
+    line-height: 16px;
 }
 
 .post-options {
-    padding: var(--space-sm);
     background: transparent;
     border: none;
-    color: var(--text-tertiary);
     cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: all var(--transition-fast);
-}
-
-.post-options:hover {
-    background: var(--bg-hover);
     color: var(--text-primary);
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .post-image {
     position: relative;
     width: 100%;
-    aspect-ratio: 1;
-    background: var(--bg-tertiary);
-    overflow: hidden;
+    /* Full bleed */
+    padding: 0;
+    background: transparent;
+    overflow: visible;
+    margin: 12px 0;
 }
 
 .post-image img {
     width: 100%;
-    height: 100%;
+    height: auto;
+    display: block;
     object-fit: cover;
-    transition: transform var(--transition-slow);
+    border-radius: 4px;
+    /* Minimal rounding */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: none;
 }
 
 .post-card:hover .post-image img {
-    transform: scale(1.02);
+    transform: none;
 }
 
-.post-image-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
-    color: var(--text-tertiary);
-    gap: var(--space-sm);
+/* Like Heart Overlay */
+.like-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none;
+    opacity: 0;
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
+    z-index: 10;
 }
 
-.post-image-placeholder .icon {
-    font-size: 3rem;
-    opacity: 0.5;
+.like-overlay svg {
+    width: 80px;
+    height: 80px;
+    fill: white;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.3));
 }
 
-.post-image-placeholder .prompt {
-    font-size: var(--font-size-sm);
-    max-width: 80%;
-    text-align: center;
-    font-style: italic;
+.like-overlay.active {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+}
+
+.post-footer {
+    padding: 0;
+    background: var(--bg-card);
 }
 
 .post-actions {
     display: flex;
-    gap: var(--space-md);
-    padding: var(--space-md);
-    border-bottom: 1px solid var(--border-light);
+    justify-content: space-between;
+    padding: 6px 0;
+    /* Vertical padding only */
+    margin-top: 4px;
+}
+
+.post-actions-left {
+    display: flex;
+    gap: 0;
+    align-items: center;
 }
 
 .post-action {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
     background: transparent;
     border: none;
-    color: var(--text-secondary);
-    font-size: var(--font-size-lg);
+    padding: 4px 0;
+    /* Minimal vertical padding */
     cursor: pointer;
-    transition: all var(--transition-fast);
-    padding: var(--space-xs);
-    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease, transform 0.1s ease;
 }
 
 .post-action:hover {
-    color: var(--text-primary);
-    transform: scale(1.1);
+    opacity: 0.7;
+}
+
+.post-action:active {
+    transform: scale(0.9);
 }
 
 .post-action.liked {
-    color: var(--heart-color);
+    color: var(--like-color);
+    fill: var(--like-color);
 }
 
-.post-action.liked .heart-icon {
-    animation: heartBeat 0.4s ease-out;
+.post-action.liked svg {
+    fill: var(--like-color);
+    color: var(--like-color);
+}
+
+.menu-action svg {
+    width: 24px;
+    height: 24px;
+}
+
+.post-like-count {
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 1;
+    color: var(--text-primary);
+    margin-left: -2.5px;
+    margin-right: 16px;
+    /* Space between the like-block and the next action */
+    display: flex;
+    align-items: center;
+    padding-top: 7px;
+}
+
+.post-caption {
+    font-size: 15px;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    padding: 0 14px;
+    letter-spacing: -0.01em;
+    color: rgba(245, 245, 245, 0.9);
+}
+
+.post-location {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.post-time-ago {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: var(--space-xs);
+    margin-bottom: var(--space-md);
+}
+
+/* Hide numbers on buttons now that we show likes separately */
+.post-action-count {
+    display: none;
 }
 
 .post-action-count {
@@ -510,23 +676,31 @@ a:hover {
 }
 
 .post-content {
-    padding: var(--space-md);
+    padding: 0;
+    /* Remove padding to align with likes/actions */
 }
 
 .post-caption {
     color: var(--text-primary);
-    margin-bottom: var(--space-sm);
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 4px;
+    padding: 0;
 }
 
 .post-caption .author {
     font-weight: 600;
     margin-right: var(--space-xs);
+    color: var(--text-primary);
+    /* Ensure Username is white/primary */
 }
 
 .post-view-comments {
-    color: var(--text-tertiary);
-    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    /* Grey */
+    font-size: 14px;
     cursor: pointer;
+    margin-bottom: 4px;
 }
 
 .post-view-comments:hover {
@@ -538,7 +712,8 @@ a:hover {
    ================================ */
 .comments-section {
     padding: var(--space-md);
-    border-top: 1px solid var(--border-light);
+    border-top: none;
+    /* remove separator */
 }
 
 .comment {
@@ -659,7 +834,8 @@ a:hover {
 
 .agent-card {
     background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-light);
+    /* Subtle border for these cards */
     border-radius: var(--radius-lg);
     padding: var(--space-lg);
     text-align: center;
@@ -751,7 +927,7 @@ a:hover {
    Stories
    ================================ */
 .stories-bar {
-    margin: var(--space-lg) 0 var(--space-xl);
+    margin: 0 0 var(--space-xl);
 }
 
 .stories-header {
@@ -764,13 +940,24 @@ a:hover {
 .stories-hint {
     color: var(--text-tertiary);
     font-size: var(--font-size-sm);
+    display: none;
+    /* Hidden as requested */
 }
 
 .stories-row {
     display: flex;
     gap: var(--space-md);
     overflow-x: auto;
-    padding-bottom: var(--space-sm);
+    padding: 20px 0 30px var(--space-sm);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    mask-image: linear-gradient(to right, transparent, black 20px, black 95%, transparent);
+}
+
+.stories-row::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
 }
 
 .story-card {
@@ -779,28 +966,59 @@ a:hover {
     color: var(--text-primary);
     cursor: pointer;
     text-align: center;
-    min-width: 88px;
+    min-width: 90px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--space-xs);
+    scroll-snap-align: start;
+    opacity: 0.85;
+    transition: var(--transition-fluid), opacity 0.3s ease;
+}
+
+.story-card:hover {
+    transform: translateY(-4px);
+    opacity: 1;
 }
 
 .story-ring {
-    width: 72px;
-    height: 72px;
-    border-radius: var(--radius-full);
-    padding: 2px;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    padding: 3px;
     background: var(--accent-gradient);
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 4px 15px rgba(220, 39, 67, 0.3);
+    transition: transform var(--transition-fluid);
+}
+
+.story-card:hover .story-ring {
+    transform: scale(1.05);
+}
+
+@keyframes storyPulse {
+    0% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+
+    50% {
+        transform: scale(1.02);
+        filter: brightness(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
 }
 
 .story-avatar {
-    width: 64px;
-    height: 64px;
-    border-radius: var(--radius-full);
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
     background: var(--bg-tertiary);
     display: flex;
     align-items: center;
@@ -808,6 +1026,8 @@ a:hover {
     font-weight: 700;
     color: white;
     overflow: hidden;
+    border: 4px solid var(--bg-primary);
+    /* Thicker gap */
 }
 
 .story-avatar img {
@@ -829,9 +1049,11 @@ a:hover {
 }
 
 .story-name {
-    font-size: var(--font-size-xs);
-    color: var(--text-secondary);
-    max-width: 90px;
+    font-size: 12px;
+    color: var(--text-primary);
+    /* Brighter */
+    max-width: 100px;
+    font-weight: 500;
 }
 
 .story-expiry {
@@ -999,13 +1221,23 @@ a:hover {
 
 .profile-header {
     display: grid;
-    grid-template-columns: 120px 1fr;
-    gap: var(--space-lg);
-    padding: var(--space-xl);
+    grid-template-columns: 160px 1fr;
+    gap: 24px;
+    padding: var(--space-lg);
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
+    align-items: center;
+    /* Center vertically */
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* Ensure text container uses available space */
+    min-width: 0;
 }
 
 .profile-avatar {
@@ -1020,6 +1252,7 @@ a:hover {
     font-weight: 700;
     color: white;
     overflow: hidden;
+    margin: 0;
 }
 
 .profile-avatar img {
@@ -1051,7 +1284,7 @@ a:hover {
 
 .profile-stats {
     display: flex;
-    gap: var(--space-xl);
+    gap: var(--space-md);
 }
 
 .profile-stat {
@@ -1062,6 +1295,8 @@ a:hover {
     font-size: var(--font-size-lg);
     font-weight: 700;
     color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: 2px;
 }
 
 .profile-stat-label {
@@ -1069,6 +1304,7 @@ a:hover {
     color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    line-height: 1.2;
 }
 
 .profile-posts {
@@ -1088,9 +1324,9 @@ a:hover {
 }
 
 .profile-posts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
 }
 
 .profile-post-card {
@@ -1099,24 +1335,29 @@ a:hover {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     overflow: hidden;
-    cursor: pointer;
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-fast);
+    /* Feed-like style for profile posts */
+    width: 100%;
+    aspect-ratio: auto;
+    /* Let content define it */
+    cursor: default;
+    display: block;
+    border: none;
+    background: transparent;
+    box-shadow: none;
 }
 
 .profile-post-card img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    display: block;
 }
 
 .profile-post-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--accent-primary);
+    transform: none;
+    box-shadow: none;
+    border-color: transparent;
 }
 
 /* ================================
@@ -1268,6 +1509,42 @@ a:hover {
 
     100% {
         transform: scale(1);
+    }
+}
+
+/* Profile Story Ring */
+.profile-avatar {
+    width: 150px;
+    height: 150px;
+    margin: 0;
+    /* Remove right margin to align left in grid */
+    flex-shrink: 0;
+}
+
+.profile-avatar.has-stories {
+    cursor: pointer;
+}
+
+.story-ring.profile-ring {
+    width: 100%;
+    height: 100%;
+    padding: 3px;
+}
+
+.story-avatar.profile-avatar-inner {
+    width: 100%;
+    height: 100%;
+    font-size: 3rem;
+    border: 4px solid var(--bg-primary);
+    /* Space between ring and image */
+}
+
+@media (max-width: 768px) {
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        margin: 0;
+        /* Left align */
     }
 }
 
@@ -1472,4 +1749,293 @@ a:hover {
 
 .agent-nav-btn.next {
     margin-left: var(--space-md);
+}
+
+/* Heart Animation - Instagram Pop */
+@keyframes likeHeartPop {
+    0% {
+        transform: scale(1);
+    }
+
+    25% {
+        transform: scale(1.2);
+    }
+
+    50% {
+        transform: scale(0.95);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.post-action.liked svg {
+    animation: likeHeartPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: var(--like-color);
+    fill: var(--like-color);
+}
+
+/* Explore Grid */
+.explore-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xs);
+    width: 100%;
+}
+
+.explore-grid .profile-post-card {
+    aspect-ratio: 1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    margin: 0;
+    border-radius: 0;
+}
+
+/* Immersive Story Modal */
+.story-modal-overlay {
+    background: #000;
+    /* Solid black for immersion */
+}
+
+.story-modal {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: 450px;
+    /* Mobile width */
+    max-height: 800px;
+    /* Avoid full screen on desktop */
+    background: #1a1a1a;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 768px) {
+    .story-modal {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+}
+
+.story-progress-container {
+    padding: 8px 8px 0;
+    display: flex;
+    gap: 4px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+}
+
+.story-progress-bar {
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    flex: 1;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.story-progress-fill {
+    height: 100%;
+    background: #fff;
+    width: 0;
+}
+
+.story-header-overlay {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    padding: 0 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 20;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.story-author-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.story-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.story-avatar-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.story-username {
+    font-weight: 600;
+    color: #fff;
+    font-size: 14px;
+}
+
+.story-time {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+}
+
+.close-story {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.story-image-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+
+.story-image-content {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Contain to show full image */
+}
+
+/* Invisible Touch Areas for Nav */
+.story-nav-overlay {
+    position: absolute;
+    top: 50px;
+    /* Below header */
+    bottom: 80px;
+    /* Above footer */
+    z-index: 10;
+    /* background: rgba(255,0,0,0.1); Debug */
+}
+
+.story-nav-overlay.left {
+    left: 0;
+    width: 33%;
+}
+
+.story-nav-overlay.right {
+    right: 0;
+    width: 33%;
+}
+
+.story-footer-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    /* Gradient for readibility */
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    z-index: 20;
+}
+
+.story-reply-input {
+    flex: 1;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 9999px;
+    padding: 10px 16px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.story-reply-input::placeholder {
+    color: #fff;
+}
+
+.story-like-btn,
+.story-share-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    padding: 0;
+    cursor: pointer;
+}
+
+.story-like-btn svg,
+.story-share-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+
+.explore-grid .profile-post-card {
+    border-radius: 0;
+    /* No radius on grid items usually */
+    aspect-ratio: 1;
+}
+
+/* Fix Post Actions */
+.post-action {
+    display: inline-flex;
+    /* Ensure proper box model */
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    /* Give touch target */
+    margin: 0;
+    width: 40px;
+    /* Fixed width to prevent overlap/layout shifts */
+    height: 40px;
+}
+
+.post-action svg {
+    pointer-events: none;
+    /* Ensure key events go to button */
+}
+
+/* Buttons */
+.profile-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-xs);
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--accent-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0085d6;
+    /* Darker blue */
+}
+
+.btn-secondary {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background-color: #262626;
 }

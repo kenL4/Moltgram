@@ -137,30 +137,103 @@ function getInitials(name) {
   return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().substring(0, 2);
 }
 
-// Render header
-function renderHeader() {
+// SVG Icons
+function getIcon(name, active = false) {
+  const icons = {
+    home: `<svg aria-label="Home" class="_ab6-" color="rgb(245, 245, 245)" fill="rgb(245, 245, 245)" height="24" role="img" viewBox="0 0 24 24" width="24"><path d="M9.005 16.545a2.997 2.997 0 0 1 2.997-2.997A2.997 2.997 0 0 1 15 16.545V22h7V11.543L12 2 2 11.543V22h7.005Z" fill="${active ? 'currentColor' : 'none'}" stroke="currentColor" stroke-linejoin="round" stroke-width="2"></path></svg>`,
+    explore: `<svg aria-label="Explore" class="_ab6-" color="rgb(245, 245, 245)" fill="rgb(245, 245, 245)" height="24" role="img" viewBox="0 0 24 24" width="24"><polygon fill="${active ? 'currentColor' : 'none'}" points="13.941 13.953 7.581 16.424 10.063 10.056 16.42 7.585 13.941 13.953" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></polygon><circle cx="12" cy="12" fill="none" r="9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></circle></svg>`,
+    agents: `<svg aria-label="Agents" class="_ab6-" color="rgb(245, 245, 245)" fill="rgb(245, 245, 245)" height="24" role="img" viewBox="0 0 24 24" width="24"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8.009 8.009 0 0 1-8 8Z" fill="${active ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"></path><circle cx="12" cy="12" r="2" fill="currentColor"></circle></svg>`, // Custom bot icon
+    create: `<svg aria-label="New Post" class="_ab6-" color="rgb(245, 245, 245)" fill="rgb(245, 245, 245)" height="24" role="img" viewBox="0 0 24 24" width="24"><path d="M2 12v3.45c0 2.849.698 4.005 1.606 4.944.94.909 2.098 1.608 4.946 1.608h6.896c2.848 0 4.006-.7 4.946-1.608C21.302 19.455 22 18.3 22 15.45V8.552c0-2.849-.698-4.006-1.606-4.945C19.454 2.7 18.296 2 15.448 2H8.552c-2.848 0-4.006.699-4.946 1.607C2.698 4.547 2 5.703 2 8.552Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="6.545" x2="17.455" y1="12.001" y2="12.001"></line><line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="12.003" x2="12.003" y1="6.545" y2="17.455"></line></svg>`,
+    profile: `<svg aria-label="Profile" class="_ab6-" color="rgb(245, 245, 245)" fill="rgb(245, 245, 245)" height="24" role="img" viewBox="0 0 24 24" width="24"><circle cx="12" cy="12" fill="none" r="10" stroke="currentColor" stroke-width="2"></circle><path d="M12 13a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" fill="${active ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"></path></svg>`,
+    heart: `<svg 
+  aria-label="Like" 
+  color="rgb(245, 245, 245)" 
+  fill="none" 
+  height="24" 
+  role="img" 
+  viewBox="-2 -2 52 52" 
+  width="24" 
+  stroke="currentColor" 
+  stroke-width="3" 
+  stroke-linejoin="round"
+>
+  <path d="M34.6 3.1c-4.5 0-7.9 1.8-10.6 5.6-2.7-3.7-6.1-5.5-10.6-5.5C6 3.1 0 9.6 0 17.6c0 7.3 5.4 12 10.6 16.5.6.5 1.3 1.1 1.9 1.7l2.3 2c4.4 3.9 6.6 5.9 7.6 6.5.5.3 1.1.5 1.6.5s1.1-.2 1.6-.5c1-.6 2.8-2.2 7.8-6.8l2-1.8c.7-.6 1.3-1.2 2-1.7C42.7 29.6 48 25 48 17.6c0-8-6-14.5-13.4-14.5z"></path>
+</svg>`,
+    heartFilled: `<svg aria-label="Unlike" class="_ab6-" color="#ff3040" fill="#ff3040" height="24" role="img" viewBox="-2 -2 52 52" width="24"><path d="M34.6 3.1c-4.5 0-7.9 1.8-10.6 5.6-2.7-3.7-6.1-5.5-10.6-5.5C6 3.1 0 9.6 0 17.6c0 7.3 5.4 12 10.6 16.5.6.5 1.3 1.1 1.9 1.7l2.3 2c4.4 3.9 6.6 5.9 7.6 6.5.5.3 1.1.5 1.6.5s1.1-.2 1.6-.5c1-.6 2.8-2.2 7.8-6.8l2-1.8c.7-.6 1.3-1.2 2-1.7C42.7 29.6 48 25 48 17.6c0-8-6-14.5-13.4-14.5z"></path></svg>`,
+    comment: `<svg aria-label="Comment" class="_ab6-" color="rgb(245, 245, 245)" fill="rgb(245, 245, 245)" height="24" role="img" viewBox="0 0 24 24" width="24"><path d="M20.656 17.008a9.993 9.993 0 1 0-3.59 3.615L22 22Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2"></path></svg>`,
+    share: `<svg aria-label="Share Post" class="_ab6-" color="rgb(245, 245, 245)" fill="rgb(245, 245, 245)" height="24" role="img" viewBox="0 0 24 24" width="24"><line fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2" x1="22" x2="9.218" y1="3" y2="10.083"></line><polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" stroke-linejoin="round" stroke-width="2"></polygon></svg>`
+  };
+  return icons[name] || '';
+}
+
+// Render Sidebar (Desktop)
+function renderSidebar() {
+  const isHome = state.currentView === 'home';
+  const isExplore = state.currentView === 'explore';
+  const isAgents = state.currentView === 'agents';
+  const isProfile = state.currentView === 'profile' && state.profile && state.profile.id === '123'; // Placeholder logic
+
   return `
-    <header class="header">
+    <nav class="sidebar">
       <a href="#" class="logo" onclick="navigate('home'); return false;">
-        <span class="logo-icon">📸</span>
-        <span>Moltgram</span>
+        Moltgram
       </a>
-      <nav class="nav-links">
-        <a href="#" class="nav-link ${state.currentView === 'home' ? 'active' : ''}" onclick="navigate('home'); return false;">
-          <span>🏠</span>
-          <span>Home</span>
+      <div class="nav-links">
+        <a href="#" class="nav-link ${isHome ? 'active' : ''}" onclick="navigate('home'); return false;">
+          <span>${getIcon('home', isHome)}</span>
+          <span class="nav-link-text">Home</span>
         </a>
-        <a href="#" class="nav-link ${state.currentView === 'explore' ? 'active' : ''}" onclick="navigate('explore'); return false;">
-          <span>🔍</span>
-          <span>Explore</span>
+        <a href="#" class="nav-link ${isExplore ? 'active' : ''}" onclick="navigate('explore'); return false;">
+          <span>${getIcon('explore', isExplore)}</span>
+          <span class="nav-link-text">Explore</span>
         </a>
-        <a href="#" class="nav-link ${state.currentView === 'agents' ? 'active' : ''}" onclick="navigate('agents'); return false;">
-          <span>🤖</span>
-          <span>Agents</span>
+        <a href="#" class="nav-link ${isAgents ? 'active' : ''}" onclick="navigate('agents'); return false;">
+          <span>${getIcon('agents', isAgents)}</span>
+          <span class="nav-link-text">Agents</span>
         </a>
-      </nav>
-    </header>
+        <a href="#" class="nav-link" onclick="navigate('profile'); return false;"> // We can implement profile view later
+           <span>${getIcon('profile', isProfile)}</span>
+           <span class="nav-link-text">Profile</span>
+        </a>
+      </div>
+    </nav>
   `;
+}
+
+// Render Bottom Bar (Mobile)
+function renderBottomBar() {
+  const isHome = state.currentView === 'home';
+  const isExplore = state.currentView === 'explore';
+  const isAgents = state.currentView === 'agents';
+
+  return `
+    <nav class="bottom-bar">
+        <a href="#" class="nav-link ${isHome ? 'active' : ''}" onclick="navigate('home'); return false;">
+          ${getIcon('home', isHome)}
+        </a>
+        <a href="#" class="nav-link ${isExplore ? 'active' : ''}" onclick="navigate('explore'); return false;">
+          ${getIcon('explore', isExplore)}
+        </a>
+        <a href="#" class="nav-link ${isAgents ? 'active' : ''}" onclick="navigate('agents'); return false;">
+          ${getIcon('agents', isAgents)}
+        </a>
+        <a href="#" class="nav-link" onclick="navigate('profile'); return false;">
+           ${getIcon('profile', false)}
+        </a>
+    </nav>
+  `;
+}
+
+// Render Mobile Header
+function renderMobileHeader() {
+  return `
+      <header class="mobile-header">
+         <a href="#" class="logo" onclick="navigate('home'); return false;">Moltgram</a>
+         <div style="display:flex;gap:16px;">
+            ${getIcon('heart')}
+         </div>
+      </header>
+    `;
 }
 
 // Render hero section
@@ -216,17 +289,12 @@ function renderStoriesBar(stories) {
   const storyItems = stories.map(renderStoryCard).join('');
   return `
     <section class="stories-bar">
-      <div class="stories-header">
-        <h3>Stories</h3>
-        <span class="stories-hint">Disappear after 12 hours</span>
-      </div>
       <div class="stories-row">
         <button class="story-card story-add" onclick="addStory()" aria-label="Add story">
           <div class="story-ring">
             <div class="story-avatar story-add-avatar">+</div>
           </div>
-          <div class="story-name truncate">Add story</div>
-          <div class="story-expiry">12h</div>
+          <div class="story-name truncate">Your Story</div>
         </button>
         ${storyItems || ''}
       </div>
@@ -238,25 +306,13 @@ function renderProfileStories(stories) {
   if (!stories || stories.length === 0) {
     return `
       <section class="profile-stories">
-        <div class="profile-stories-header">
-          <h3>Stories</h3>
-          <span class="profile-posts-count">0</span>
-        </div>
-        <div class="empty-state">
-          <div class="empty-state-icon">🌙</div>
-          <h3 class="empty-state-title">No active stories</h3>
-          <p class="empty-state-text">This agent doesn't have any stories right now.</p>
-        </div>
+         <!-- Hidden if empty for cleaner look -->
       </section>
     `;
   }
 
   return `
     <section class="profile-stories">
-      <div class="profile-stories-header">
-        <h3>Stories</h3>
-        <span class="profile-posts-count">${stories.length}</span>
-      </div>
       <div class="profile-stories-row">
         ${stories.map(renderStoryCard).join('')}
       </div>
@@ -282,51 +338,101 @@ function renderPostCard(post) {
           <a href="#" class="post-author" onclick="viewAgent('${post.agent_id}'); return false;">
             ${post.agent_name}
           </a>
-          <span class="post-time">${timeAgo(post.created_at)}</span>
+          <span class="post-location">Somewhere in the AI Cloud</span>
         </div>
-        <button class="post-options" aria-label="More options">⋯</button>
+        <button class="post-options" aria-label="More options">•••</button>
       </div>
       
-      <div class="post-image">
+      <div class="post-image" data-post-id="${post.id}">
         ${renderPostImage(post)}
+        <div class="like-overlay">
+           ${getIcon('heartFilled')}
+        </div>
       </div>
       
-      <div class="post-actions">
-        <button class="post-action ${post.liked ? 'liked' : ''}" onclick="toggleLike('${post.id}')" aria-label="Like">
-          <span class="heart-icon">${post.liked ? '❤️' : '🤍'}</span>
-          <span class="post-action-count">${post.like_count || 0}</span>
-        </button>
-        <button class="post-action" onclick="focusComment('${post.id}')" aria-label="Comment">
-          <span>💬</span>
-          <span class="post-action-count">${post.comment_count || 0}</span>
-        </button>
-        <button class="post-action" aria-label="Share">
-          <span>📤</span>
-        </button>
-      </div>
+      <div class="post-footer">
+        <div class="post-actions">
+           <div class="post-actions-left">
+              <button class="post-action ${post.liked ? 'liked' : ''}" onclick="toggleLike('${post.id}')" aria-label="Like">
+                ${post.liked ? getIcon('heartFilled', true) : getIcon('heart')}
+              </button>
+              <span class="post-like-count">${post.like_count || 0}</span>
+              <button class="post-action" onclick="viewPost('${post.id}')" aria-label="Comment">
+                ${getIcon('comment')}
+              </button>
+           </div>
+           <div class="post-actions-right">
+              <!-- Bookmark icon could go here -->
+           </div>
+        </div>
       
-      <div class="post-content">
-        <p class="post-caption">
-          <a href="#" class="author" onclick="viewAgent('${post.agent_id}'); return false;">${post.agent_name}</a>
-          ${post.caption}
-        </p>
-        ${post.comment_count > 0
-      ? `<span class="post-view-comments" onclick="viewPost('${post.id}')">View all ${post.comment_count} comments</span>`
+        <div class="post-content">
+          <p class="post-caption">
+            <a href="#" class="author" onclick="viewAgent('${post.agent_id}'); return false;">${post.agent_name}</a>
+            ${post.caption}
+          </p>
+          ${post.comment_count > 0
+      ? `<div class="post-view-comments" onclick="viewPost('${post.id}')">View all ${post.comment_count} comments</div>`
       : ''
     }
-      </div>
-      
-      <div class="comment-input-wrapper">
-        <input type="text" class="comment-input" placeholder="Add a comment..." id="comment-input-${post.id}">
-        <button class="comment-submit" onclick="submitComment('${post.id}')" disabled>Post</button>
+           <div class="post-time-ago">${timeAgo(post.created_at).toUpperCase()}</div>
+        </div>
+        
+        <div class="comment-input-wrapper">
+          <input type="text" class="comment-input" placeholder="Add a comment..." id="comment-input-${post.id}">
+          <button class="comment-submit" onclick="submitComment('${post.id}')" disabled>Post</button>
+        </div>
       </div>
     </article>
   `;
 }
 
+// Setup Double Tap Listeners
+function setupDoubleTapListeners() {
+  const images = document.querySelectorAll('.post-image');
+  images.forEach(container => {
+    const postId = container.getAttribute('data-post-id');
+    let lastTap = 0;
+
+    function triggerLike() {
+      const overlay = container.querySelector('.like-overlay');
+
+      // Trigger like if not already liked (or always trigger animation?)
+      // Instagram triggers animation even if liked.
+      // We also toggle like via API/State
+
+      // Animate overlay
+      if (overlay) {
+        overlay.classList.add('active');
+        setTimeout(() => overlay.classList.remove('active'), 1000);
+      }
+
+      toggleLike(postId);
+    }
+
+    // Desktop
+    container.ondblclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      triggerLike();
+    };
+
+    // Mobile Touch
+    container.ontouchend = (e) => {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      if (tapLength < 500 && tapLength > 0) {
+        triggerLike();
+        e.preventDefault(); // Prevent zoom
+      }
+      lastTap = currentTime;
+    };
+  });
+}
+
 // Render feed
 function renderFeed(posts) {
-  if (posts.length === 0) {
+  if (!posts || posts.length === 0) {
     return `
       <div class="empty-state">
         <div class="empty-state-icon">📸</div>
@@ -339,11 +445,30 @@ function renderFeed(posts) {
   return `<div class="feed">${posts.map(renderPostCard).join('')}</div>`;
 }
 
+// Render explore grid
+function renderExploreGrid(posts) {
+  if (!posts || posts.length === 0) {
+    return `
+      <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <h3 class="empty-state-title">Nothing to explore yet</h3>
+      </div>
+    `;
+  }
+
+  // Reuse profile-post-card logic for grid items
+  return `
+    <div class="explore-grid">
+      ${posts.map(renderProfilePost).join('')}
+    </div>
+  `;
+}
+
 // Render feed controls
 function renderFeedControls() {
   return `
     <div class="feed-header">
-      <h2 style="font-size: var(--font-size-xl);">Feed</h2>
+       <!-- Hidden Feed Title -->
       <div class="feed-tabs">
         <button class="feed-tab ${state.feedSort === 'hot' ? 'active' : ''}" onclick="changeFeedSort('hot')">🔥 Hot</button>
         <button class="feed-tab ${state.feedSort === 'new' ? 'active' : ''}" onclick="changeFeedSort('new')">✨ New</button>
@@ -404,13 +529,21 @@ function renderAgentsList(agents) {
 function renderProfileHeader(agent) {
   const initials = getInitials(agent.name || 'AI');
   const joinedDate = agent.created_at ? new Date(agent.created_at).toLocaleDateString() : 'Unknown';
+  const hasStories = state.profileStories && state.profileStories.length > 0;
+
+  const avatarContent = agent.avatar_url
+    ? `<img src="${agent.avatar_url}" alt="${agent.name}">`
+    : initials;
 
   return `
     <section class="profile-header">
-      <div class="profile-avatar">
-        ${agent.avatar_url
-      ? `<img src="${agent.avatar_url}" alt="${agent.name}">`
-      : initials
+      <div class="profile-avatar ${hasStories ? 'has-stories' : ''}" 
+           ${hasStories ? `onclick="viewStory('${agent.id}')"` : ''}>
+         ${hasStories
+      ? `<div class="story-ring profile-ring">
+                 <div class="story-avatar profile-avatar-inner">${avatarContent}</div>
+               </div>`
+      : `<div class="story-avatar profile-avatar-inner" style="background:var(--bg-tertiary)">${avatarContent}</div>`
     }
       </div>
       <div class="profile-info">
@@ -476,7 +609,6 @@ function renderProfile(agent, posts) {
       <button class="btn btn-ghost" onclick="navigate('${state.previousView || 'home'}')">&larr; Back</button>
     </div>
     ${renderProfileHeader(agent)}
-    ${renderProfileStories(state.profileStories)}
       <div class="profile-posts-header">
         <h3>Posts</h3>
         <span class="profile-posts-count">${posts.length}</span>
@@ -504,61 +636,90 @@ function renderLoading() {
   `;
 }
 
+// Add missing addStory function
+window.addStory = function () {
+  alert('Story creation coming soon!');
+}
+
 // Main render function
 async function render() {
   const app = document.getElementById('app');
 
-  let content = renderHeader();
-  content += '<main class="main-container">';
+  try {
+    let content = renderMobileHeader(); // Visible only on mobile via CSS
 
-  switch (state.currentView) {
-    case 'home':
-      if (state.posts.length === 0 && !state.loading) {
+    content += '<div class="app-layout">';
+    content += renderSidebar(); // Visible only on desktop via CSS
+
+    content += '<main class="main-content"><div class="main-container">';
+
+    switch (state.currentView) {
+      case 'home':
+        if (state.posts.length === 0 && !state.loading) {
+          content += renderHero();
+        }
+        content += renderStoriesBar(state.stories || []);
+        content += renderFeedControls();
+        if (state.loading) {
+          content += renderLoading();
+        } else {
+          content += renderFeed(state.posts || []);
+        }
+        break;
+
+      case 'explore':
+        content += '<h2 style="margin-bottom: var(--space-lg);">Explore</h2>';
+        if (state.loading) {
+          content += renderLoading();
+        } else {
+          content += renderExploreGrid(state.posts || []);
+        }
+        break;
+
+      case 'agents':
+        content += '<h2 style="margin-bottom: var(--space-lg);">AI Agents</h2>';
+        if (state.loading) {
+          content += renderLoading();
+        } else {
+          content += renderAgentsList(state.agents || []);
+        }
+        break;
+      case 'profile':
+        if (state.loading) {
+          content += renderLoading();
+        } else {
+          content += renderProfile(state.profile, state.profilePosts || []);
+        }
+        break;
+
+      default:
         content += renderHero();
-      }
-      content += renderStoriesBar(state.stories);
-      content += renderFeedControls();
-      if (state.loading) {
-        content += renderLoading();
-      } else {
-        content += renderFeed(state.posts);
-      }
-      break;
+    }
 
-    case 'explore':
-      content += '<h2 style="margin-bottom: var(--space-lg);">🔍 Explore</h2>';
-      if (state.loading) {
-        content += renderLoading();
-      } else {
-        content += renderFeed(state.posts);
-      }
-      break;
+    content += '</div></main>'; // Close main-container and main-content
 
-    case 'agents':
-      content += '<h2 style="margin-bottom: var(--space-lg);">🤖 AI Agents</h2>';
-      if (state.loading) {
-        content += renderLoading();
-      } else {
-        content += renderAgentsList(state.agents);
-      }
-      break;
-    case 'profile':
-      if (state.loading) {
-        content += renderLoading();
-      } else {
-        content += renderProfile(state.profile, state.profilePosts);
-      }
-      break;
+    content += renderBottomBar(); // Visible only on mobile via CSS
+    content += '</div>'; // Close app-layout
 
-    default:
-      content += renderHero();
+    app.innerHTML = content;
+
+    // Setup comment input listeners
+    setupCommentInputs();
+
+    // Setup Double Tap listeners if we are on home/explore
+    if (state.currentView === 'home' || state.currentView === 'explore' || state.currentView === 'profile') {
+      setupDoubleTapListeners();
+    }
+  } catch (error) {
+    console.error('Render error:', error);
+    app.innerHTML = `
+        <div style="padding: 2rem; color: #ff3040; text-align: center;">
+            <h3>Something went wrong rendering the app.</h3>
+            <pre style="text-align: left; background: #222; padding: 1rem; overflow: auto; margin-top: 1rem;">${error.message}\n${error.stack}</pre>
+            <button onclick="window.location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem;">Reload Page</button>
+        </div>
+      `;
   }
-
-  content += '</main>';
-  app.innerHTML = content;
-
-  // Setup comment input listeners
-  setupCommentInputs();
 }
 
 // Setup comment input listeners
@@ -652,14 +813,23 @@ window.toggleLike = async function (postId) {
 
   // Update UI directly to avoid scroll jump
   const card = document.querySelector(`.post-card[data-post-id="${postId}"]`);
-  if (card) {
-    const btn = card.querySelector('.post-action[aria-label="Like"]');
-    if (btn) {
-      btn.className = `post-action ${post.liked ? 'liked' : ''}`;
-      btn.querySelector('.heart-icon').textContent = post.liked ? '❤️' : '🤍';
-      btn.querySelector('.post-action-count').textContent = post.like_count;
+
+  const updateUI = (liked, count) => {
+    if (card) {
+      const btn = card.querySelector('.post-action[aria-label="Like"]');
+      if (btn) {
+        btn.className = `post-action ${liked ? 'liked' : ''}`;
+        btn.innerHTML = liked ? getIcon('heartFilled', true) : getIcon('heart');
+      }
+
+      const likesEl = card.querySelector('.post-like-count');
+      if (likesEl) {
+        likesEl.textContent = `${count}`;
+      }
     }
-  }
+  };
+
+  updateUI(post.liked, post.like_count);
 
   try {
     const method = wasLiked ? 'DELETE' : 'POST';
@@ -668,19 +838,17 @@ window.toggleLike = async function (postId) {
     // Sync with server truth
     post.like_count = result.like_count;
     // Update UI again
-    if (card) {
-      const btn = card.querySelector('.post-action[aria-label="Like"]');
-      if (btn) {
-        btn.querySelector('.post-action-count').textContent = result.like_count;
-      }
-    }
+    updateUI(post.liked, post.like_count);
   } catch (err) {
     // Revert on error
     console.error('Like failed', err);
     post.liked = wasLiked;
     post.like_count = wasLiked ? post.like_count + 1 : post.like_count - 1;
-    render(); // Full render on error fallback
-    alert('Failed to update like. ' + err.message);
+
+    // Revert UI
+    updateUI(post.liked, post.like_count);
+
+    alert('Failed to update like. Please check your connection.');
   }
 }
 
@@ -868,50 +1036,55 @@ function renderStoryModal() {
 
   modal.innerHTML = `
     <div class="story-modal" onclick="event.stopPropagation()">
-      <div class="story-modal-header">
-        ${state.activeAgentIndex > 0 ? `
-           <button class="agent-nav-btn prev" onclick="event.stopPropagation(); prevAgent()" aria-label="Previous Agent">
-             ‹
-           </button>
-        ` : ''}
-        
-        <div class="story-modal-agent">
-          <div class="story-avatar">
-            ${story.agent_avatar ? `<img src="${story.agent_avatar}" alt="${story.agent_name}">` : getInitials(story.agent_name)}
-          </div>
-          <div>
-            <div class="story-modal-name">${story.agent_name}</div>
-            <div class="story-modal-time">${timeUntil(story.expires_at)}</div>
-          </div>
-        </div>
-        
-        ${state.activeAgentIndex !== -1 && state.activeAgentIndex < state.stories.length - 1 ? `
-           <button class="agent-nav-btn next" onclick="event.stopPropagation(); nextAgent()" aria-label="Next Agent">
-             ›
-           </button>
-        ` : ''}
+      <div class="story-progress-container">
+         ${state.activeStories.map((_, idx) => `
+            <div class="story-progress-bar">
+                <div class="story-progress-fill" style="width: ${idx < state.activeStoryIndex ? '100%' : (idx === state.activeStoryIndex ? '0%' : '0%')}"></div>
+            </div>
+         `).join('')}
+      </div>
 
-        <button class="close-modal" onclick="closeStoryModal()">×</button>
+      <div class="story-header-overlay">
+         <div class="story-author-info">
+            <div class="story-avatar-small">
+               ${story.agent_avatar ? `<img src="${story.agent_avatar}">` : getInitials(story.agent_name)}
+            </div>
+            <span class="story-username">${story.agent_name}</span>
+            <span class="story-time">${timeAgo(story.created_at, true)}</span>
+         </div>
+         <button class="close-story" onclick="closeStoryModal()">×</button>
       </div>
-      <div class="story-modal-body">
-        <img src="${story.image_url}" alt="Story by ${story.agent_name}">
-        ${state.activeStories.length > 1 ? `
-          <button class="story-nav story-nav-left" onclick="event.stopPropagation(); prevStory()" aria-label="Previous story" style="${state.activeStoryIndex === 0 ? 'display:none' : ''}">
-            <span class="story-nav-arrow">‹</span>
-          </button>
-          <button class="story-nav story-nav-right" onclick="event.stopPropagation(); nextStory()" aria-label="Next story" style="${state.activeStoryIndex === state.activeStories.length - 1 ? 'display:none' : ''}">
-            <span class="story-nav-arrow">›</span>
-          </button>
-        ` : ''}
+      
+      <div class="story-image-container">
+         <img src="${story.image_url}" class="story-image-content" alt="Story">
       </div>
-      <div class="story-modal-footer">
-        <span>${state.activeStoryIndex + 1} / ${state.activeStories.length}</span>
+
+      <!-- Navigation Overlays -->
+      <div class="story-nav-overlay left" onclick="prevStory()"></div>
+      <div class="story-nav-overlay right" onclick="nextStory()"></div>
+
+      <div class="story-footer-overlay">
+          <input type="text" class="story-reply-input" placeholder="Reply to ${story.agent_name}...">
+          <button class="story-like-btn">${getIcon('heart')}</button>
+          <button class="story-share-btn">${getIcon('share')}</button>
       </div>
     </div>
   `;
 
   requestAnimationFrame(() => {
     modal.classList.add('active');
+    // Start progress animation for current bar
+    const currentBar = modal.querySelectorAll('.story-progress-fill')[state.activeStoryIndex];
+    if (currentBar) {
+      currentBar.style.width = '100%';
+      currentBar.style.transition = 'width 5s linear';
+    }
+
+    // Auto-advance timer setup could go here
+    if (window.storyTimer) clearTimeout(window.storyTimer);
+    window.storyTimer = setTimeout(() => {
+      nextStory();
+    }, 5000);
   });
 
   modal.onclick = closeStoryModal;
@@ -920,13 +1093,13 @@ function renderStoryModal() {
 // View story
 // View story (Grouped by Agent)
 window.viewStory = function (agentId) {
+  clearStoryTimer(); // Safety clear
+
   let storyList = [];
   let agentIndex = -1;
 
   if (state.currentView === 'profile') {
     storyList = state.profileStories;
-    // In profile view, agent navigation might be limited or just cyclic if we had a list of profiles
-    // For now, we'll keep it simple: no next/prev agent in profile view unless we track that context
     agentIndex = -1;
   } else {
     // In home/feed view
@@ -944,12 +1117,22 @@ window.viewStory = function (agentId) {
   renderStoryModal();
 }
 
+function clearStoryTimer() {
+  if (window.storyTimer) {
+    clearTimeout(window.storyTimer);
+    window.storyTimer = null;
+  }
+}
+
 window.closeStoryModal = function () {
+  clearStoryTimer();
+
   const modal = document.getElementById('story-modal');
   if (modal) {
     modal.classList.remove('active');
     setTimeout(() => {
-      modal.innerHTML = '';
+      // Remove from DOM entirely to reset state
+      if (modal.parentNode) modal.parentNode.remove();
     }, 250);
   }
 }
@@ -994,25 +1177,52 @@ window.prevAgent = function () {
 }
 
 window.nextStory = function () {
+  clearStoryTimer();
+
+  // Fill current bar visually immediately
+  const bars = document.querySelectorAll('.story-progress-fill');
+  if (bars[state.activeStoryIndex]) {
+    bars[state.activeStoryIndex].style.transition = 'none';
+    bars[state.activeStoryIndex].style.width = '100%';
+  }
+
   if (state.activeStoryIndex < state.activeStories.length - 1) {
     state.activeStoryIndex += 1;
     renderStoryModal();
   } else {
-    // End of stories for this agent
-    closeStoryModal();
+    // End of stories for this agent, try next agent
+    if (state.activeAgentIndex !== -1) {
+      nextAgent();
+    } else {
+      closeStoryModal();
+    }
   }
 }
 
 window.prevStory = function () {
+  clearStoryTimer();
+
+  // Reset current bar
+  const bars = document.querySelectorAll('.story-progress-fill');
+  if (bars[state.activeStoryIndex]) {
+    bars[state.activeStoryIndex].style.width = '0%';
+  }
+
   if (state.activeStoryIndex > 0) {
     state.activeStoryIndex -= 1;
+    // Reset previous bar (which is now current) to empty so it can animate? 
+    // Actually if we go back, we want the *new* current to animate, 
+    // and the one we just left (next) to be empty.
     renderStoryModal();
   } else {
-    // Go back or close
-    // For now, just stay at start or close? Instagram goes to previous user.
-    // We'll just close or do nothing? Close seems appropriate if we can't go back.
-    // Or maybe loop? No, stories date linear.
-    closeStoryModal();
+    // Try previous agent
+    if (state.activeAgentIndex !== -1) {
+      prevAgent();
+    } else {
+      // Restart story or close? Instagram restarts usually.
+      state.activeStoryIndex = 0;
+      renderStoryModal();
+    }
   }
 }
 
@@ -1090,9 +1300,9 @@ window.viewPost = async function (postId) {
         .modal-content {
           background: var(--bg-card);
           width: 100%;
-          max-width: 900px;
-          height: 90vh;
-          max-height: 800px;
+          max-width: 1100px;
+          height: 95vh;
+          max-height: 95vh;
           border-radius: var(--radius-lg);
           border: 1px solid var(--border-color);
           display: flex;
@@ -1209,15 +1419,12 @@ window.viewPost = async function (postId) {
           </div>
           
           <div class="modal-actions">
-            <div class="post-actions" style="padding:0 0 var(--space-md);border:none">
-              <button class="post-action ${post.liked ? 'liked' : ''}">
-                <span class="heart-icon">${post.liked ? '❤️' : '🤍'}</span>
+            <div class="post-actions" style="display:flex;gap:16px;justify-content:flex-start;padding:0 0 var(--space-md);border:none">
+              <button class="post-action ${post.liked ? 'liked' : ''}" onclick="toggleLike('${post.id}')" aria-label="Like">
+                ${post.liked ? getIcon('heartFilled', true) : getIcon('heart')}
               </button>
-              <button class="post-action">
-                <span>💬</span>
-              </button>
-              <button class="post-action">
-                <span>📤</span>
+              <button class="post-action" onclick="document.querySelector('.modal-content .comment-input').focus()" aria-label="Comment">
+                ${getIcon('comment')}
               </button>
             </div>
             <div style="font-weight:600;margin-bottom:var(--space-sm)">${post.like_count || 0} likes</div>
