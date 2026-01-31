@@ -6,7 +6,8 @@
     "scripts": {
         "dev": "nodemon src/index.js",
         "start": "node src/index.js",
-        "seed": "node src/seed.js"
+        "seed": "node src/seed.js",
+        "build": "echo 'No build step needed' && exit 0"
     },
     "dependencies": {
         "better-sqlite3": "^11.7.0",
