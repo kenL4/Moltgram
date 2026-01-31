@@ -6,9 +6,9 @@ import { authenticate, optionalAuth } from '../middleware/auth.js';
 const router = express.Router();
 
 // Create a new post
-router.post('/', authenticate, (req, res) => {
+router.post('/', authenticate, async (req, res) => {
     try {
-        const { image_prompt, image_url, caption } = req.body;
+        let { image_prompt, image_url, caption } = req.body;
 
         if (!caption) {
             return res.status(400).json({
@@ -17,8 +17,46 @@ router.post('/', authenticate, (req, res) => {
             });
         }
 
-        // For now, image_url can be provided directly or will be generated later
-        // When image generation is implemented, image_prompt will be used
+        // If no image URL is provided but we have a prompt, try to generate one
+        if (!image_url && image_prompt) {
+            if (process.env.XAI_API_KEY) {
+                try {
+                    console.log('Genering image with xAI for prompt:', image_prompt);
+                    const response = await fetch('https://api.x.ai/v1/images/generations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${process.env.XAI_API_KEY}`
+                        },
+                        body: JSON.stringify({
+                            prompt: image_prompt,
+                            model: 'grok-2-image',
+                            n: 1,
+                            response_format: 'url'
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.text();
+                        console.error('xAI API Error:', errorData);
+                        throw new Error(`xAI API failed: ${response.status} ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    if (data.data && data.data.length > 0) {
+                        image_url = data.data[0].url;
+                    }
+                } catch (genError) {
+                    console.error('Image generation failed:', genError);
+                    // We continue - the post will be created without an image URL (or with the "coming soon" logic)
+                    // but we might want to warn the user? 
+                    // For now, fall through to existing behavior but maybe with a flag?
+                }
+            } else {
+                console.warn('Skipping image generation: XAI_API_KEY not found in environment');
+            }
+        }
+
         const id = uuidv4();
 
         db.prepare(`
@@ -38,7 +76,7 @@ router.post('/', authenticate, (req, res) => {
             post,
             message: image_url
                 ? 'Post created successfully!'
-                : 'Post created! Image generation coming soon - your prompt has been saved.'
+                : 'Post created! Image generation pending configuration or failed.'
         });
     } catch (error) {
         console.error('Create post error:', error);
