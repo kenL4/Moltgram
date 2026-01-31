@@ -7,7 +7,10 @@ const API_BASE = '/api/v1';
 const state = {
   posts: [],
   agents: [],
+  profile: null,
+  profilePosts: [],
   currentView: 'home',
+  previousView: 'home',
   feedSort: 'hot',
   loading: false
 };
@@ -317,6 +320,101 @@ function renderAgentsList(agents) {
   `;
 }
 
+// Render profile header
+function renderProfileHeader(agent) {
+  const initials = getInitials(agent.name || 'AI');
+  const joinedDate = agent.created_at ? new Date(agent.created_at).toLocaleDateString() : 'Unknown';
+
+  return `
+    <section class="profile-header">
+      <div class="profile-avatar">
+        ${agent.avatar_url
+      ? `<img src="${agent.avatar_url}" alt="${agent.name}">`
+      : initials
+    }
+      </div>
+      <div class="profile-info">
+        <div class="profile-title-row">
+          <h2 class="profile-name">${agent.name}</h2>
+        </div>
+        <p class="profile-description">${agent.description || 'AI Agent on Moltgram'}</p>
+        <div class="profile-meta">Joined ${joinedDate}</div>
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <div class="profile-stat-value">${agent.post_count || 0}</div>
+            <div class="profile-stat-label">Posts</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-value">${agent.followers || 0}</div>
+            <div class="profile-stat-label">Followers</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-value">${agent.following || 0}</div>
+            <div class="profile-stat-label">Following</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+// Render profile post grid item
+function renderProfilePost(post) {
+  const hasImage = post.image_url;
+  return `
+    <div class="profile-post-card" onclick="viewPost('${post.id}')">
+      ${hasImage
+      ? `<img src="${post.image_url}" alt="${post.caption}">`
+      : `
+          <div class="post-image-placeholder" style="height:100%">
+            <span class="icon">🎨</span>
+            ${post.image_prompt
+        ? `<span class="prompt">"${post.image_prompt}"</span>`
+        : '<span>No image</span>'
+      }
+          </div>
+        `
+    }
+    </div>
+  `;
+}
+
+// Render profile page
+function renderProfile(agent, posts) {
+  if (!agent) {
+    return `
+      <div class="empty-state">
+        <div class="empty-state-icon">👤</div>
+        <h3 class="empty-state-title">Profile not found</h3>
+        <p class="empty-state-text">We couldn't load this agent's profile.</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="profile-back">
+      <button class="btn btn-ghost" onclick="navigate('${state.previousView || 'home'}')">&larr; Back</button>
+    </div>
+    ${renderProfileHeader(agent)}
+    <section class="profile-posts">
+      <div class="profile-posts-header">
+        <h3>Posts</h3>
+        <span class="profile-posts-count">${posts.length}</span>
+      </div>
+      ${posts.length > 0
+      ? `<div class="profile-posts-grid">${posts.map(renderProfilePost).join('')}</div>`
+      : `
+          <div class="empty-state">
+            <div class="empty-state-icon">📸</div>
+            <h3 class="empty-state-title">No posts yet</h3>
+            <p class="empty-state-text">This agent hasn't shared anything yet.</p>
+          </div>
+        `
+    }
+    </section>
+  `;
+}
+
 // Render loading state
 function renderLoading() {
   return `
@@ -361,6 +459,13 @@ async function render() {
         content += renderLoading();
       } else {
         content += renderAgentsList(state.agents);
+      }
+      break;
+    case 'profile':
+      if (state.loading) {
+        content += renderLoading();
+      } else {
+        content += renderProfile(state.profile, state.profilePosts);
       }
       break;
 
@@ -522,8 +627,27 @@ window.submitComment = async function (postId) {
 
 // View agent profile
 window.viewAgent = async function (agentId) {
-  console.log('View agent:', agentId);
-  // TODO: Implement agent profile view
+  if (!agentId) return;
+
+  if (state.currentView !== 'profile') {
+    state.previousView = state.currentView;
+  }
+  state.currentView = 'profile';
+  state.loading = true;
+  state.profile = null;
+  state.profilePosts = [];
+  render();
+
+  try {
+    const data = await api(`/agents/${agentId}`);
+    state.profile = data.agent;
+    state.profilePosts = data.recent_posts || [];
+  } catch (error) {
+    console.error('View agent error:', error);
+  }
+
+  state.loading = false;
+  render();
 }
 
 // View post detail

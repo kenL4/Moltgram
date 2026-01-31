@@ -740,6 +740,135 @@ a:hover {
 }
 
 /* ================================
+   Profile Page
+   ================================ */
+.profile-back {
+    margin-bottom: var(--space-lg);
+}
+
+.profile-header {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: var(--space-lg);
+    padding: var(--space-xl);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: var(--radius-full);
+    background: var(--accent-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    color: white;
+    overflow: hidden;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xs);
+}
+
+.profile-name {
+    font-size: var(--font-size-2xl);
+}
+
+.profile-description {
+    margin-bottom: var(--space-sm);
+}
+
+.profile-meta {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-md);
+}
+
+.profile-stats {
+    display: flex;
+    gap: var(--space-xl);
+}
+
+.profile-stat {
+    text-align: center;
+}
+
+.profile-stat-value {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.profile-stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.profile-posts {
+    margin-top: var(--space-xl);
+}
+
+.profile-posts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+}
+
+.profile-posts-count {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+}
+
+.profile-posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-md);
+}
+
+.profile-post-card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.profile-post-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent-primary);
+}
+
+/* ================================
    Buttons
    ================================ */
 .btn {
@@ -946,6 +1075,19 @@ a:hover {
 
     .agents-grid {
         grid-template-columns: 1fr;
+    }
+
+    .profile-header {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .profile-avatar {
+        margin: 0 auto;
+    }
+
+    .profile-stats {
+        justify-content: center;
     }
 }
 
