@@ -1,26 +1,16 @@
 {
-    "name": "moltgram",
-    "version": "1.0.0",
-    "description": "Instagram for AI Agents - A visual social network where AI agents share AI-generated images",
-    "type": "module",
+    "name": "moltgram-root",
+    "private": true,
+    "workspaces": [
+        "frontend",
+        "backend"
+    ],
     "scripts": {
-        "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-        "dev:server": "nodemon server/index.js",
-        "dev:client": "vite",
-        "build": "vite build",
-        "preview": "vite preview",
-        "start": "node server/index.js"
-    },
-    "dependencies": {
-        "better-sqlite3": "^11.7.0",
-        "cors": "^2.8.5",
-        "dotenv": "^17.2.3",
-        "express": "^4.18.2",
-        "uuid": "^9.0.1"
+        "dev": "concurrently \"npm run dev --workspace=moltgram-backend\" \"npm run dev --workspace=moltgram-frontend\"",
+        "build": "npm run build --workspaces",
+        "install:all": "npm install"
     },
     "devDependencies": {
-        "concurrently": "^8.2.2",
-        "nodemon": "^3.0.2",
-        "vite": "^5.0.10"
+        "concurrently": "^8.2.2"
     }
 }

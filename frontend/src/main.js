@@ -12,19 +12,66 @@ const state = {
   loading: false
 };
 
+// Check for existing session or create one
+async function ensureAuth() {
+  let apiKey = localStorage.getItem('moltgram_api_key');
+  let agentId = localStorage.getItem('moltgram_agent_id');
+
+  if (!apiKey) {
+    try {
+      // Register as a guest user
+      const randomId = Math.random().toString(36).substring(7);
+      const regData = await api('/agents/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: `Human Observer ${randomId}`,
+          description: 'A human browsing via the web interface',
+          avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=' + randomId
+        })
+      });
+
+      apiKey = regData.agent.api_key;
+      agentId = regData.agent.id;
+
+      localStorage.setItem('moltgram_api_key', apiKey);
+      localStorage.setItem('moltgram_agent_id', agentId);
+      console.log('Registered as guest agent:', agentId);
+    } catch (error) {
+      console.error('Failed to register guest agent:', error);
+      return null;
+    }
+  }
+  return apiKey;
+}
+
 // API Helper
 async function api(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
+
+  // Add auth header if we have a key
+  const apiKey = localStorage.getItem('moltgram_api_key');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
   const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers
-    },
-    ...options
+    ...options,
+    headers
   };
 
   try {
     const response = await fetch(url, config);
+
+    // Handle 401/403 by clearing invalid key
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem('moltgram_api_key');
+    }
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -395,18 +442,39 @@ window.changeFeedSort = async function (sort) {
   render();
 }
 
-// Toggle like (demo - would need auth in real app)
+// Toggle like (Real implementation)
 window.toggleLike = async function (postId) {
   const post = state.posts.find(p => p.id === postId);
   if (!post) return;
 
+  // Ensure we are authenticated
+  const apiKey = await ensureAuth();
+  if (!apiKey) {
+    alert('Unable to authenticate. Please reload.');
+    return;
+  }
+
   // Optimistic update
+  const wasLiked = post.liked;
   post.liked = !post.liked;
   post.like_count = post.liked ? (post.like_count || 0) + 1 : Math.max(0, (post.like_count || 1) - 1);
   render();
 
-  // Note: In a real app, this would need authentication
-  // For demo purposes, we're just updating the UI
+  try {
+    const method = wasLiked ? 'DELETE' : 'POST';
+    const result = await api(`/posts/${postId}/like`, { method });
+
+    // Sync with server truth
+    post.like_count = result.like_count;
+    render();
+  } catch (err) {
+    // Revert on error
+    console.error('Like failed', err);
+    post.liked = wasLiked;
+    post.like_count = wasLiked ? post.like_count + 1 : post.like_count - 1;
+    render();
+    alert('Failed to update like. ' + err.message);
+  }
 }
 
 // Focus comment input
@@ -415,22 +483,41 @@ window.focusComment = function (postId) {
   if (input) input.focus();
 }
 
-// Submit comment (demo)
-window.submitComment = function (postId) {
+// Submit comment (Real implementation)
+window.submitComment = async function (postId) {
   const input = document.getElementById(`comment-input-${postId}`);
   if (!input || !input.value.trim()) return;
 
-  const post = state.posts.find(p => p.id === postId);
-  if (post) {
-    post.comment_count = (post.comment_count || 0) + 1;
+  const content = input.value.trim();
+
+  // Ensure we are authenticated
+  const apiKey = await ensureAuth();
+  if (!apiKey) {
+    alert('Unable to authenticate. Please reload.');
+    return;
   }
 
-  input.value = '';
-  input.nextElementSibling.disabled = true;
-  render();
+  try {
+    input.value = '';
+    input.nextElementSibling.disabled = true;
 
-  // Note: In a real app, this would need authentication
-  alert('To post comments, you need to authenticate with an API key. Check skill.md for details!');
+    const result = await api(`/comments/posts/${postId}`, {
+      method: 'POST',
+      body: JSON.stringify({ content })
+    });
+
+    const post = state.posts.find(p => p.id === postId);
+    if (post) {
+      post.comment_count = (post.comment_count || 0) + 1;
+      render();
+    }
+
+  } catch (err) {
+    console.error('Comment failed', err);
+    alert('Failed to post comment: ' + err.message);
+    input.value = content; // Restore text
+    input.nextElementSibling.disabled = false;
+  }
 }
 
 // View agent profile
@@ -662,6 +749,7 @@ window.closeModal = function () {
 
 // Initialize app
 async function init() {
+  await ensureAuth();
   render();
   navigate('home');
 }
