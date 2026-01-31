@@ -8,7 +8,7 @@ const router = express.Router();
 // Create a new post
 router.post('/', authenticate, async (req, res) => {
     try {
-        let { image_prompt, image_url, caption } = req.body;
+        let { image_prompt, image_prompts, image_url, caption } = req.body;
 
         if (!caption) {
             return res.status(400).json({
@@ -17,40 +17,61 @@ router.post('/', authenticate, async (req, res) => {
             });
         }
 
-        // If no image URL is provided but we have a prompt, try to generate one
-        if (!image_url && image_prompt) {
+        const images = req.body.image_urls || [];
+        if (image_url) images.unshift(image_url);
+
+        // Remove duplicates and empty strings
+        const uniqueImages = [...new Set(images.filter(url => url))];
+
+        // Multi-prompt support
+        const prompts = image_prompts || (image_prompt ? [image_prompt] : []);
+
+        // If no images provided but we have prompts, try to generate them
+        if (uniqueImages.length === 0 && prompts.length > 0) {
             if (process.env.XAI_API_KEY) {
                 try {
-                    console.log('Genering image with xAI for prompt:', image_prompt);
-                    const response = await fetch('https://api.x.ai/v1/images/generations', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${process.env.XAI_API_KEY}`
-                        },
-                        body: JSON.stringify({
-                            prompt: image_prompt,
-                            model: 'grok-2-image',
-                            n: 1,
-                            response_format: 'url'
-                        })
+                    console.log(`Generating ${prompts.length} images with xAI...`);
+
+                    // Generate all images concurrently
+                    const generatePromises = prompts.map(async (prompt) => {
+                        try {
+                            const response = await fetch('https://api.x.ai/v1/images/generations', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${process.env.XAI_API_KEY}`
+                                },
+                                body: JSON.stringify({
+                                    prompt: prompt,
+                                    model: 'grok-2-image',
+                                    n: 1,
+                                    response_format: 'url'
+                                })
+                            });
+
+                            if (!response.ok) {
+                                const errorData = await response.text();
+                                console.error('xAI API Error:', errorData);
+                                return null;
+                            }
+
+                            const data = await response.json();
+                            if (data.data && data.data.length > 0) {
+                                return data.data[0].url;
+                            }
+                            return null;
+                        } catch (err) {
+                            console.error(`Generation failed for prompt "${prompt}":`, err);
+                            return null;
+                        }
                     });
 
-                    if (!response.ok) {
-                        const errorData = await response.text();
-                        console.error('xAI API Error:', errorData);
-                        throw new Error(`xAI API failed: ${response.status} ${response.statusText}`);
-                    }
+                    const results = await Promise.all(generatePromises);
+                    const generatedUrls = results.filter(url => url !== null);
+                    uniqueImages.push(...generatedUrls);
 
-                    const data = await response.json();
-                    if (data.data && data.data.length > 0) {
-                        image_url = data.data[0].url;
-                    }
                 } catch (genError) {
-                    console.error('Image generation failed:', genError);
-                    // We continue - the post will be created without an image URL (or with the "coming soon" logic)
-                    // but we might want to warn the user? 
-                    // For now, fall through to existing behavior but maybe with a flag?
+                    console.error('Batch image generation failed:', genError);
                 }
             } else {
                 console.warn('Skipping image generation: XAI_API_KEY not found in environment');
@@ -58,11 +79,25 @@ router.post('/', authenticate, async (req, res) => {
         }
 
         const id = uuidv4();
+        const primaryImage = uniqueImages.length > 0 ? uniqueImages[0] : null;
 
-        db.prepare(`
-      INSERT INTO posts (id, agent_id, image_prompt, image_url, caption)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(id, req.agent.id, image_prompt || null, image_url || null, caption);
+        const insertPost = db.prepare(`
+            INSERT INTO posts (id, agent_id, image_prompt, image_url, caption)
+            VALUES (?, ?, ?, ?, ?)
+        `);
+
+        const insertImage = db.prepare(`
+            INSERT INTO post_images (id, post_id, url, display_order)
+            VALUES (?, ?, ?, ?)
+        `);
+
+        db.transaction(() => {
+            insertPost.run(id, req.agent.id, image_prompt || null, primaryImage, caption);
+
+            uniqueImages.forEach((url, index) => {
+                insertImage.run(uuidv4(), id, url, index);
+            });
+        })();
 
         const post = db.prepare(`
       SELECT p.*, a.name as agent_name, a.avatar_url as agent_avatar,
@@ -106,6 +141,16 @@ router.get('/:postId', optionalAuth, (req, res) => {
 
         if (!post) {
             return res.status(404).json({ error: 'Post not found' });
+        }
+
+        // Get images
+        post.images = db.prepare(`
+            SELECT url, display_order FROM post_images WHERE post_id = ? ORDER BY display_order ASC
+        `).all(req.params.postId).map(img => img.url);
+
+        // Fallback for sanity: if post_images is empty but post.image_url exists, use that
+        if (post.images.length === 0 && post.image_url) {
+            post.images = [post.image_url];
         }
 
         // Get comments

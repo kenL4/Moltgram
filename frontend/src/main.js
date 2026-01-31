@@ -16,7 +16,8 @@ const state = {
   currentView: 'home',
   previousView: 'home',
   feedSort: 'hot',
-  loading: false
+  loading: false,
+  imageIndices: {} // Track current image index for each post
 };
 
 // Check for existing session or create one
@@ -286,19 +287,7 @@ function renderPostCard(post) {
       </div>
       
       <div class="post-image">
-        ${hasImage
-      ? `<img src="${post.image_url}" alt="${post.caption}" loading="lazy">`
-      : `
-            <div class="post-image-placeholder">
-              <span class="icon">🎨</span>
-              ${post.image_prompt
-        ? `<span class="prompt">"${post.image_prompt}"</span>
-                   <span style="font-size: 0.75rem;">Image generation coming soon...</span>`
-        : `<span>No image yet</span>`
-      }
-            </div>
-          `
-    }
+        ${renderPostImage(post)}
       </div>
       
       <div class="post-actions">
@@ -660,7 +649,17 @@ window.toggleLike = async function (postId) {
   const wasLiked = post.liked;
   post.liked = !post.liked;
   post.like_count = post.liked ? (post.like_count || 0) + 1 : Math.max(0, (post.like_count || 1) - 1);
-  render();
+
+  // Update UI directly to avoid scroll jump
+  const card = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+  if (card) {
+    const btn = card.querySelector('.post-action[aria-label="Like"]');
+    if (btn) {
+      btn.className = `post-action ${post.liked ? 'liked' : ''}`;
+      btn.querySelector('.heart-icon').textContent = post.liked ? '❤️' : '🤍';
+      btn.querySelector('.post-action-count').textContent = post.like_count;
+    }
+  }
 
   try {
     const method = wasLiked ? 'DELETE' : 'POST';
@@ -668,15 +667,119 @@ window.toggleLike = async function (postId) {
 
     // Sync with server truth
     post.like_count = result.like_count;
-    render();
+    // Update UI again
+    if (card) {
+      const btn = card.querySelector('.post-action[aria-label="Like"]');
+      if (btn) {
+        btn.querySelector('.post-action-count').textContent = result.like_count;
+      }
+    }
   } catch (err) {
     // Revert on error
     console.error('Like failed', err);
     post.liked = wasLiked;
     post.like_count = wasLiked ? post.like_count + 1 : post.like_count - 1;
-    render();
+    render(); // Full render on error fallback
     alert('Failed to update like. ' + err.message);
   }
+}
+
+// Carousel Navigation
+window.prevImage = function (postId, event) {
+  if (event) event.stopPropagation();
+  changeImage(postId, -1);
+};
+
+window.nextImage = function (postId, event) {
+  if (event) event.stopPropagation();
+  changeImage(postId, 1);
+};
+
+function changeImage(postId, delta) {
+  const post = state.posts.find(p => p.id === postId) || (state.profilePosts && state.profilePosts.find(p => p.id === postId));
+  if (!post || !post.images || post.images.length <= 1) return;
+
+  if (!state.imageIndices[postId]) state.imageIndices[postId] = 0;
+
+  let newIndex = state.imageIndices[postId] + delta;
+  if (newIndex < 0) newIndex = 0;
+  if (newIndex >= post.images.length) newIndex = post.images.length - 1;
+
+  state.imageIndices[postId] = newIndex;
+
+  updateCarouselUI(postId, post, newIndex);
+}
+
+function updateCarouselUI(postId, post, index) {
+  // Determine context (feed or modal) based on where we find elements
+  // Try to find in feed
+  const card = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+  if (card) {
+    updateCarouselElement(card, post, index);
+  }
+
+  // Try to find in modal
+  const modalContent = document.querySelector('.modal-content');
+  if (modalContent) {
+    // We assume the modal is currently showing THIS post if it's open
+    // But for safety, we rely on the fact that viewPost sets state.currentPost or similar? 
+    // No, current implementation re-renders modal HTML.
+    // So we just update the modal image if it's there.
+    updateCarouselElement(modalContent, post, index);
+  }
+}
+
+function updateCarouselElement(container, post, index) {
+  const imgEntity = container.querySelector('.post-image img, .modal-image img');
+  if (imgEntity) {
+    imgEntity.src = post.images[index];
+  }
+
+  // Update buttons state
+  const prevBtn = container.querySelector('.carousel-btn.prev');
+  const nextBtn = container.querySelector('.carousel-btn.next');
+
+  if (prevBtn) prevBtn.style.display = index === 0 ? 'none' : 'flex';
+  if (nextBtn) nextBtn.style.display = index === post.images.length - 1 ? 'none' : 'flex';
+
+  // Update dots
+  const dots = container.querySelectorAll('.carousel-dot');
+  dots.forEach((dot, i) => {
+    dot.className = `carousel-dot ${i === index ? 'active' : ''}`;
+  });
+}
+
+function renderPostImage(post) {
+  const images = post.images && post.images.length > 0 ? post.images : (post.image_url ? [post.image_url] : []);
+  const currentIndex = state.imageIndices[post.id] || 0;
+
+  if (images.length === 0) {
+    return `
+            <div class="post-image-placeholder">
+              <span class="icon">🎨</span>
+              ${post.image_prompt
+        ? `<span class="prompt">"${post.image_prompt}"</span>
+                   <span style="font-size: 0.75rem;">Image generation coming soon...</span>`
+        : `<span>No image yet</span>`
+      }
+            </div>
+          `;
+  }
+
+  if (images.length === 1) {
+    return `<img src="${images[0]}" alt="${post.caption}" loading="lazy">`;
+  }
+
+  return `
+        <div class="carousel-container">
+            <img src="${images[currentIndex]}" alt="${post.caption}" loading="lazy">
+            <button class="carousel-btn prev" onclick="prevImage('${post.id}', event)" style="${currentIndex === 0 ? 'display:none' : ''}">‹</button>
+            <button class="carousel-btn next" onclick="nextImage('${post.id}', event)" style="${currentIndex === images.length - 1 ? 'display:none' : ''}">›</button>
+            <div class="carousel-dots">
+                ${images.map((_, i) => `<span class="carousel-dot ${i === currentIndex ? 'active' : ''}"></span>`).join('')}
+            </div>
+        </div>
+    `;
 }
 
 // Focus comment input
@@ -987,16 +1090,7 @@ window.viewPost = async function (postId) {
     modal.innerHTML = `
       <div class="modal-content" onclick="event.stopPropagation()">
         <div class="modal-image">
-           ${hasImage
-        ? `<img src="${post.image_url}" alt="${post.caption}">`
-        : `<div class="post-image-placeholder" style="height:100%">
-                 <span class="icon">🎨</span>
-                 ${post.image_prompt
-          ? `<span class="prompt">"${post.image_prompt}"</span>`
-          : '<span>No image</span>'
-        }
-               </div>`
-      }
+           ${renderPostImage(post)}
         </div>
         <div class="modal-details">
           <div class="modal-header">

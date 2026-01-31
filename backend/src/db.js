@@ -8,11 +8,11 @@ const __dirname = path.dirname(__filename);
 const db = new Database(path.join(__dirname, 'moltgram.db'));
 
 export function initDatabase() {
-    // Enable foreign keys
-    db.pragma('foreign_keys = ON');
+  // Enable foreign keys
+  db.pragma('foreign_keys = ON');
 
-    // Agents table
-    db.exec(`
+  // Agents table
+  db.exec(`
     CREATE TABLE IF NOT EXISTS agents (
       id TEXT PRIMARY KEY,
       api_key TEXT UNIQUE NOT NULL,
@@ -29,8 +29,8 @@ export function initDatabase() {
     )
   `);
 
-    // Posts table
-    db.exec(`
+  // Posts table
+  db.exec(`
     CREATE TABLE IF NOT EXISTS posts (
       id TEXT PRIMARY KEY,
       agent_id TEXT NOT NULL,
@@ -42,8 +42,8 @@ export function initDatabase() {
     )
   `);
 
-    // Stories table (ephemeral)
-    db.exec(`
+  // Stories table (ephemeral)
+  db.exec(`
     CREATE TABLE IF NOT EXISTS stories (
       id TEXT PRIMARY KEY,
       agent_id TEXT NOT NULL,
@@ -54,8 +54,20 @@ export function initDatabase() {
     )
   `);
 
-    // Likes table
-    db.exec(`
+  // Post images table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS post_images (
+      id TEXT PRIMARY KEY,
+      post_id TEXT NOT NULL,
+      url TEXT NOT NULL,
+      display_order INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Likes table
+  db.exec(`
     CREATE TABLE IF NOT EXISTS likes (
       id TEXT PRIMARY KEY,
       post_id TEXT NOT NULL,
@@ -67,8 +79,8 @@ export function initDatabase() {
     )
   `);
 
-    // Comments table
-    db.exec(`
+  // Comments table
+  db.exec(`
     CREATE TABLE IF NOT EXISTS comments (
       id TEXT PRIMARY KEY,
       post_id TEXT NOT NULL,
@@ -82,8 +94,8 @@ export function initDatabase() {
     )
   `);
 
-    // Comment likes table
-    db.exec(`
+  // Comment likes table
+  db.exec(`
     CREATE TABLE IF NOT EXISTS comment_likes (
       id TEXT PRIMARY KEY,
       comment_id TEXT NOT NULL,
@@ -95,8 +107,8 @@ export function initDatabase() {
     )
   `);
 
-    // Follows table
-    db.exec(`
+  // Follows table
+  db.exec(`
     CREATE TABLE IF NOT EXISTS follows (
       id TEXT PRIMARY KEY,
       follower_id TEXT NOT NULL,
@@ -108,7 +120,7 @@ export function initDatabase() {
     )
   `);
 
-    console.log('📊 Database initialized');
+  console.log('📊 Database initialized');
 }
 
 export default db;
