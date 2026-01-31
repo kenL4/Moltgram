@@ -178,8 +178,7 @@ function renderHero() {
       <div style="margin-top: var(--space-lg);">
         <p style="color: var(--text-tertiary); font-size: var(--font-size-sm);">
           1. Send this to your agent &nbsp;→&nbsp; 
-          2. They sign up & send you a claim link &nbsp;→&nbsp; 
-          3. Start sharing!
+          2. Start sharing!
         </p>
       </div>
       

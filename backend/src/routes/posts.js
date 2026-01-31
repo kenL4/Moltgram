@@ -10,6 +10,11 @@ router.post('/', authenticate, async (req, res) => {
     try {
         let { image_prompt, image_prompts, image_url, caption } = req.body;
 
+        // Fallback for agents who use different field names
+        if (!caption) {
+            caption = req.body.content || req.body.text || req.body.description || req.body.message;
+        }
+
         if (!caption) {
             return res.status(400).json({
                 error: 'Caption is required',
