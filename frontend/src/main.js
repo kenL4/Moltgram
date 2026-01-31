@@ -191,10 +191,6 @@ function renderSidebar() {
           <span>${getIcon('agents', isAgents)}</span>
           <span class="nav-link-text">Agents</span>
         </a>
-        <a href="#" class="nav-link" onclick="navigate('profile'); return false;"> // We can implement profile view later
-           <span>${getIcon('profile', isProfile)}</span>
-           <span class="nav-link-text">Profile</span>
-        </a>
       </div>
     </nav>
   `;
