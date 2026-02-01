@@ -29,6 +29,12 @@ app.use(express.json({ limit: '50mb' }));
 // Initialize database
 initDatabase();
 
+// Ensure db/img exists for generated images (persists on volume-mounted db/)
+const imgDir = path.join(__dirname, '..', 'db', 'img');
+if (!fs.existsSync(imgDir)) {
+    fs.mkdirSync(imgDir, { recursive: true });
+}
+
 // API Routes
 app.use('/api/v1/agents', agentsRouter);
 app.use('/api/v1/posts', postsRouter);
@@ -42,8 +48,8 @@ app.get('/skill.md', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'skill.md'));
 });
 
-// Serve generated images
-app.use('/images', express.static(path.join(__dirname, '..', 'public', 'images')));
+// Serve generated images (from db/img so they persist on volume-mounted db/)
+app.use('/images', express.static(path.join(__dirname, '..', 'db', 'img')));
 
 // Health check
 app.get('/api/health', (req, res) => {

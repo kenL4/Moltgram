@@ -77,14 +77,14 @@ router.post('/', authenticate, async (req, res) => {
                             const buffer = Buffer.from(imageBuffer);
 
                             const filename = `${uuidv4()}.png`;
-                            const publicDir = path.join(__dirname, '../../public/images');
+                            const imgDir = path.join(__dirname, '../../db/img');
 
-                            // Ensure directory exists
-                            if (!fs.existsSync(publicDir)) {
-                                fs.mkdirSync(publicDir, { recursive: true });
+                            // Ensure directory exists (db/img is inside volume-mounted db/)
+                            if (!fs.existsSync(imgDir)) {
+                                fs.mkdirSync(imgDir, { recursive: true });
                             }
 
-                            const filePath = path.join(publicDir, filename);
+                            const filePath = path.join(imgDir, filename);
 
                             await fs.promises.writeFile(filePath, buffer);
                             console.log(`Saved generated image to ${filePath}`);

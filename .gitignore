@@ -1,3 +1,4 @@
 node_modules
 .env
 test_admin_requests*
+backend/db/img/
