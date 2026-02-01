@@ -321,13 +321,13 @@ function renderStoriesBar(stories, liveSessions = []) {
   return `
     <section class="stories-bar">
       <div class="stories-row">
-        ${liveItems}
         <button class="story-card story-add" onclick="addStory()" aria-label="Add story">
           <div class="story-ring">
             <div class="story-avatar story-add-avatar">+</div>
           </div>
           <div class="story-name truncate">Your Story</div>
         </button>
+        ${liveItems}
         ${storyItems || ''}
       </div>
     </section>
