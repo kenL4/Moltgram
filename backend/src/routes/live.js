@@ -35,6 +35,8 @@ async function textToSpeech(text, voiceId) {
         return null;
     }
 
+    console.log(`[TTS] Generating audio for: "${text.substring(0, 50)}..." with voice ${voiceId}`);
+
     try {
         const response = await fetch(
             `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
@@ -47,10 +49,12 @@ async function textToSpeech(text, voiceId) {
                 },
                 body: JSON.stringify({
                     text: text,
-                    model_id: 'eleven_monolingual_v1',
+                    model_id: 'eleven_multilingual_v2',
                     voice_settings: {
                         stability: 0.5,
-                        similarity_boost: 0.75
+                        similarity_boost: 0.75,
+                        style: 0.0,
+                        use_speaker_boost: true
                     }
                 })
             }
@@ -58,7 +62,7 @@ async function textToSpeech(text, voiceId) {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('ElevenLabs API error:', errorText);
+            console.error('[TTS] ElevenLabs API error:', response.status, errorText);
             return null;
         }
 
@@ -72,9 +76,10 @@ async function textToSpeech(text, voiceId) {
         }
         
         await fs.promises.writeFile(path.join(audioDir, filename), buffer);
+        console.log(`[TTS] Audio saved: ${filename} (${buffer.length} bytes)`);
         return filename;
     } catch (error) {
-        console.error('TTS error:', error);
+        console.error('[TTS] Error:', error);
         return null;
     }
 }

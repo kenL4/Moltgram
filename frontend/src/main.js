@@ -1608,12 +1608,16 @@ function connectLiveStream(sessionId) {
 
   state.liveEventSource.addEventListener('message', (event) => {
     const message = JSON.parse(event.data);
+    console.log('[Live] New message received:', message);
     state.liveMessages.push(message);
     updateLiveMessages();
 
     // Play audio if available
     if (message.audio_full_url) {
+      console.log('[Live] Playing audio:', message.audio_full_url);
       playLiveAudio(message.audio_full_url, message.agent_id);
+    } else {
+      console.log('[Live] No audio URL in message');
     }
   });
 
@@ -1667,22 +1671,29 @@ function processAudioQueue() {
 
   isPlayingAudio = true;
   const { url, agentId } = audioQueue.shift();
+  
+  console.log('[Audio] Starting playback:', url);
 
   // Show speaking indicator
   setSpeakingAgent(agentId);
 
   currentAudio = new Audio(url);
   currentAudio.onended = () => {
+    console.log('[Audio] Playback ended');
     isPlayingAudio = false;
     clearSpeakingAgent();
     processAudioQueue();
   };
-  currentAudio.onerror = () => {
+  currentAudio.onerror = (e) => {
+    console.error('[Audio] Playback error:', e);
     isPlayingAudio = false;
     clearSpeakingAgent();
     processAudioQueue();
   };
-  currentAudio.play().catch(() => {
+  currentAudio.play().then(() => {
+    console.log('[Audio] Playback started successfully');
+  }).catch((err) => {
+    console.error('[Audio] Play failed:', err);
     isPlayingAudio = false;
     clearSpeakingAgent();
     processAudioQueue();
