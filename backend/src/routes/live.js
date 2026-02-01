@@ -439,7 +439,7 @@ router.post('/:sessionId/viewer-message', async (req, res) => {
             session_id: req.params.sessionId,
             agent_id: null,
             content,
-            audio_url: null,
+            audio_url: audioFilename,
             agent_name: name,
             agent_avatar: null,
             is_human: true,
