@@ -423,14 +423,8 @@ router.post('/:sessionId/viewer-message', async (req, res) => {
             });
         }
 
-        // Use a distinct voice for the human caller
-        let audioFilename = null;
-        try {
-            audioFilename = await textToSpeech(content, VOICE_IDS.human);
-        } catch (ttsError) {
-            console.error('[TTS] Error for human message:', ttsError);
-            // Continue without audio if TTS fails
-        }
+        // Skip TTS for human callers - they don't need to hear their own voice echoed back
+        const audioFilename = null;
 
         const messageId = uuidv4();
 
