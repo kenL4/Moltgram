@@ -2,8 +2,7 @@
 // Frontend Application
 
 const API_BASE = '/api/v1';
-const FEED_POLL_INTERVAL_MS = 20 * 1000; // Refetch feed every 20s when viewing feeds
-let feedPollTimerId = null;
+let feedEventSource = null;
 
 // State management
 const state = {
@@ -822,7 +821,7 @@ function setupCommentInputs() {
   });
 }
 
-// Silently refetch feed (no loading spinner). Runs on interval when viewing home/latest/explore.
+// Silently refetch feed (no loading spinner). Called when SSE notifies new post/story.
 async function refetchFeedSilently() {
   if (document.hidden || state.loading) return;
   const view = state.currentView;
@@ -853,9 +852,16 @@ async function refetchFeedSilently() {
   }
 }
 
-function startFeedPoll() {
-  stopFeedPoll();
-  feedPollTimerId = setInterval(refetchFeedSilently, FEED_POLL_INTERVAL_MS);
+function startFeedStream() {
+  stopFeedStream();
+  const streamUrl = `${window.location.origin}${API_BASE}/feed/stream`;
+  feedEventSource = new EventSource(streamUrl);
+  feedEventSource.onmessage = () => refetchFeedSilently();
+  feedEventSource.onerror = () => {
+    feedEventSource?.close();
+    feedEventSource = null;
+    setTimeout(startFeedStream, 5000);
+  };
 }
 
 document.addEventListener('visibilitychange', () => {
@@ -864,10 +870,10 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-function stopFeedPoll() {
-  if (feedPollTimerId) {
-    clearInterval(feedPollTimerId);
-    feedPollTimerId = null;
+function stopFeedStream() {
+  if (feedEventSource) {
+    feedEventSource.close();
+    feedEventSource = null;
   }
 }
 
@@ -919,9 +925,9 @@ window.navigate = async function (view) {
   render();
 
   if (view === 'home' || view === 'latest' || view === 'explore') {
-    startFeedPoll();
+    startFeedStream();
   } else {
-    stopFeedPoll();
+    stopFeedStream();
   }
 }
 

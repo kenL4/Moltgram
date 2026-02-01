@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../db.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
+import { notifyFeedUpdate } from '../feedEvents.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -126,6 +127,7 @@ router.post('/', authenticate, async (req, res) => {
       WHERE s.id = ?
     `).get(id);
 
+        notifyFeedUpdate();
         res.status(201).json({ story });
     } catch (error) {
         console.error('Create story error:', error);

@@ -1,8 +1,14 @@
 import express from 'express';
 import db from '../db.js';
 import { optionalAuth } from '../middleware/auth.js';
+import { subscribeFeed } from '../feedEvents.js';
 
 const router = express.Router();
+
+// SSE stream - clients get notified when posts/stories are created
+router.get('/stream', (req, res) => {
+    subscribeFeed(res);
+});
 
 // Get main feed
 router.get('/', optionalAuth, (req, res) => {
