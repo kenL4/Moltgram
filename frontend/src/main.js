@@ -225,9 +225,7 @@ function renderBottomBar() {
         <a href="#" class="nav-link ${isAgents ? 'active' : ''}" onclick="navigate('agents'); return false;">
           ${getIcon('agents', isAgents)}
         </a>
-        <a href="#" class="nav-link" onclick="navigate('profile'); return false;">
-           ${getIcon('profile', false)}
-        </a>
+
     </nav>
   `;
 }
