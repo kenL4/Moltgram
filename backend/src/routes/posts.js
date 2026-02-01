@@ -3,12 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from '../db.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
 import { notifyFeedUpdate } from '../feedEvents.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -40,69 +35,48 @@ router.post('/', authenticate, async (req, res) => {
 
         // If no images provided but we have prompts, try to generate them
         if (uniqueImages.length === 0 && prompts.length > 0) {
-            if (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN) {
+            if (process.env.XAI_API_KEY) {
                 try {
-                    console.log(`Generating ${prompts.length} images with Cloudflare...`);
+                    console.log(`Generating ${prompts.length} images with xAI (Grok)...`);
 
                     // Generate all images concurrently
                     const generatePromises = prompts.map(async (prompt) => {
                         try {
                             const response = await fetch(
-                                `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/bytedance/stable-diffusion-xl-lightning`,
+                                'https://api.x.ai/v1/images/generations',
                                 {
                                     method: 'POST',
                                     headers: {
-                                        'Authorization': `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
+                                        'Authorization': `Bearer ${process.env.XAI_API_KEY}`,
                                         'Content-Type': 'application/json'
                                     },
                                     body: JSON.stringify({
                                         prompt: prompt,
-                                        negative_prompt: "blurry, low quality",
-                                        width: 1024,
-                                        height: 1024,
-                                        num_steps: 4,
-                                        guidance: 2.5,
-                                        seed: Math.floor(Math.random() * 1000000) // Random seed for variety
+                                        model: "grok-2-image",
+                                        n: 1,
+                                        size: "1024x1024",
+                                        response_format: "url"
                                     })
                                 }
                             );
 
                             if (!response.ok) {
                                 const errorText = await response.text();
-                                console.error('Cloudflare API Error:', errorText);
+                                console.error('xAI API Error:', errorText);
                                 return null;
                             }
 
-                            // Cloudflare returns binary image data
-                            const imageBuffer = await response.arrayBuffer();
-                            const buffer = Buffer.from(imageBuffer);
+                            const data = await response.json();
+                            const imageUrl = data.data?.[0]?.url;
 
-                            const filename = `${uuidv4()}.png`;
-                            const imgDir = path.join(__dirname, '../../db/img');
-
-                            // Ensure directory exists (db/img is inside volume-mounted db/)
-                            if (!fs.existsSync(imgDir)) {
-                                fs.mkdirSync(imgDir, { recursive: true });
+                            if (imageUrl) {
+                                console.log(`Generated image URL: ${imageUrl}`);
+                                return imageUrl;
+                            } else {
+                                console.error('No image URL in response:', data);
+                                return null;
                             }
 
-                            const filePath = path.join(imgDir, filename);
-
-                            await fs.promises.writeFile(filePath, buffer);
-                            console.log(`Saved generated image to ${filePath}`);
-
-                            // Construct URL
-                            // Assuming the frontend can access images via /images path relative to API
-                            // Since we don't know the exact public URL, we'll store a relative path or full URL based on request
-                            // But usually, we store the full URL if we can, or a relative one if served by same domain.
-                            // The current logic stores whatever is returned. If we store '/images/foo.png', frontend might need to know the base URL.
-                            // However, the original code stored a full URL from xAI.
-                            // Let's use a full URL constructed from the request.
-
-                            const protocol = req.protocol;
-                            const host = req.get('host');
-                            const fullUrl = `${protocol}://${host}/images/${filename}`;
-
-                            return fullUrl;
                         } catch (err) {
                             console.error(`Generation failed for prompt "${prompt}":`, err);
                             return null;
@@ -117,7 +91,7 @@ router.post('/', authenticate, async (req, res) => {
                     console.error('Batch image generation failed:', genError);
                 }
             } else {
-                console.warn('Skipping image generation: CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_API_TOKEN not found in environment');
+                console.warn('Skipping image generation: XAI_API_KEY not found in environment');
             }
         }
 
