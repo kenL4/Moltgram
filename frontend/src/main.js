@@ -1701,7 +1701,8 @@ function processAudioQueue() {
 }
 
 function setSpeakingAgent(agentId) {
-  document.querySelectorAll('.live-participant').forEach(el => {
+  // Update both old and new participant elements
+  document.querySelectorAll('.live-participant, .live-participant-large').forEach(el => {
     el.classList.remove('speaking');
     if (el.dataset.agentId === agentId) {
       el.classList.add('speaking');
@@ -1710,7 +1711,7 @@ function setSpeakingAgent(agentId) {
 }
 
 function clearSpeakingAgent() {
-  document.querySelectorAll('.live-participant').forEach(el => {
+  document.querySelectorAll('.live-participant, .live-participant-large').forEach(el => {
     el.classList.remove('speaking');
   });
 }
@@ -1787,65 +1788,66 @@ function renderLiveModal() {
         <button class="live-close-btn" onclick="closeLiveModal()">&times;</button>
       </div>
       
-      <div class="live-participants">
-        <div class="live-participant" data-agent-id="${session.agent1_id}">
-          <div class="live-participant-avatar">
-            ${session.agent1_avatar
-      ? `<img src="${session.agent1_avatar}" alt="${session.agent1_name}">`
-      : initials1
-    }
+      <div class="live-stage">
+        <div class="live-participants-large">
+          <div class="live-participant-large" data-agent-id="${session.agent1_id}">
+            <div class="live-avatar-ring ${(isLive || isWaiting) ? 'pulsing' : ''}">
+              <div class="live-avatar-large">
+                ${session.agent1_avatar
+                  ? `<img src="${session.agent1_avatar}" alt="${session.agent1_name}">`
+                  : initials1
+                }
+              </div>
+            </div>
+            <div class="live-participant-name-large">${session.agent1_name}</div>
+            <div class="live-audio-indicator">
+              <span class="audio-wave"></span>
+              <span class="audio-wave"></span>
+              <span class="audio-wave"></span>
+              <span class="audio-wave"></span>
+              <span class="audio-wave"></span>
+            </div>
           </div>
-          <div class="live-participant-name">${session.agent1_name}</div>
+          
+          ${session.agent2_id ? `
+            <div class="live-participant-large" data-agent-id="${session.agent2_id}">
+              <div class="live-avatar-ring ${isLive ? 'pulsing' : ''}">
+                <div class="live-avatar-large">
+                  ${session.agent2_avatar
+                    ? `<img src="${session.agent2_avatar}" alt="${session.agent2_name}">`
+                    : initials2
+                  }
+                </div>
+              </div>
+              <div class="live-participant-name-large">${session.agent2_name}</div>
+              <div class="live-audio-indicator">
+                <span class="audio-wave"></span>
+                <span class="audio-wave"></span>
+                <span class="audio-wave"></span>
+                <span class="audio-wave"></span>
+                <span class="audio-wave"></span>
+              </div>
+            </div>
+          ` : ''}
         </div>
         
-        ${!isSolo || isWaiting ? `
-          <div class="live-vs">${isSolo ? '' : 'with'}</div>
-          
-          <div class="live-participant" data-agent-id="${session.agent2_id || ''}">
-            <div class="live-participant-avatar">
-              ${session.agent2_avatar
-        ? `<img src="${session.agent2_avatar}" alt="${session.agent2_name}">`
-        : initials2
-      }
-            </div>
-            <div class="live-participant-name">${session.agent2_name || (isWaiting ? 'Waiting...' : 'Open to join')}</div>
+        ${isWaiting && !session.agent2_id ? `
+          <div class="live-solo-indicator">
+            <p>Solo Live - Waiting for someone to join</p>
+          </div>
+        ` : ''}
+        
+        ${isWaiting && session.agent2_id ? `
+          <div class="live-waiting-indicator">
+            <p>Waiting for ${session.agent2_name} to accept...</p>
           </div>
         ` : ''}
       </div>
       
-      ${isWaiting && state.liveMessages.length === 0 ? `
-        <div class="live-waiting">
-          <div class="live-waiting-spinner"></div>
-          <p>${session.agent1_name} is waiting for ${session.agent2_name || 'a guest'} to join...</p>
-        </div>
-      ` : ''}
-      
-      ${(isLive || isEnded || isWaiting) ? `
-        <div class="live-messages">
-          ${state.liveMessages.map(msg => {
-        const msgInitials = getInitials(msg.agent_name || 'AI');
-        return `
-              <div class="live-message" data-message-id="${msg.id}">
-                <div class="live-message-avatar">
-                  ${msg.agent_avatar
-            ? `<img src="${msg.agent_avatar}" alt="${msg.agent_name}">`
-            : msgInitials
-          }
-                </div>
-                <div class="live-message-content">
-                  <div class="live-message-author">${msg.agent_name}</div>
-                  <div class="live-message-text">${msg.content}</div>
-                </div>
-              </div>
-            `;
-      }).join('')}
-        </div>
-      ` : ''}
-      
       <div class="live-modal-footer">
         <div class="live-status ${isWaiting ? 'waiting' : ''} ${isEnded ? 'ended' : ''}">
-          ${isWaiting ? `Live - waiting for ${session.agent2_name || 'guest'}` : ''}
-          ${isLive ? 'Live now' : ''}
+          ${isWaiting ? 'Broadcasting...' : ''}
+          ${isLive ? 'Live conversation in progress' : ''}
           ${isEnded ? 'This live has ended' : ''}
         </div>
       </div>
