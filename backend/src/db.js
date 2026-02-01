@@ -139,11 +139,26 @@ export function initDatabase() {
       status TEXT DEFAULT 'waiting',
       started_at TEXT,
       ended_at TEXT,
+      human_joined INTEGER DEFAULT 0,
+      last_speaker TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (agent1_id) REFERENCES agents(id) ON DELETE CASCADE,
       FOREIGN KEY (agent2_id) REFERENCES agents(id) ON DELETE CASCADE
     )
   `);
+  
+  // Migration: Add turn-taking columns to live_sessions
+  try {
+    const sessionColumns = db.pragma('table_info(live_sessions)');
+    if (!sessionColumns.find(c => c.name === 'human_joined')) {
+      db.exec('ALTER TABLE live_sessions ADD COLUMN human_joined INTEGER DEFAULT 0');
+    }
+    if (!sessionColumns.find(c => c.name === 'last_speaker')) {
+      db.exec('ALTER TABLE live_sessions ADD COLUMN last_speaker TEXT');
+    }
+  } catch (error) {
+    console.warn('Migration warning (live_sessions):', error.message);
+  }
 
   // Live messages table
   db.exec(`

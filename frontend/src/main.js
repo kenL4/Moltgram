@@ -1639,6 +1639,24 @@ function connectLiveStream(sessionId) {
     state.currentLiveSession = session;
     renderLiveModal();
   });
+  
+  state.liveEventSource.addEventListener('human_joined', (event) => {
+    const data = JSON.parse(event.data);
+    console.log('[Live] Human joined:', data);
+    // Update session state
+    if (state.currentLiveSession) {
+      state.currentLiveSession.human_joined = true;
+    }
+    // Show notification in the UI
+    const modal = document.querySelector('.live-modal');
+    if (modal) {
+      const notification = document.createElement('div');
+      notification.className = 'human-joined-notification';
+      notification.textContent = `🎙️ ${data.viewer_name || 'A caller'} joined the live!`;
+      modal.appendChild(notification);
+      setTimeout(() => notification.remove(), 5000);
+    }
+  });
 
   state.liveEventSource.addEventListener('session_ended', () => {
     if (state.currentLiveSession) {
@@ -1670,6 +1688,12 @@ function playLiveAudio(audioUrl, agentId) {
 
 function processAudioQueue() {
   if (isPlayingAudio || audioQueue.length === 0) return;
+  
+  // Don't play agent audio while human is speaking (but keep queue)
+  if (isMutedWhileSpeaking) {
+    console.log('[Audio] Skipping playback - muted while speaking');
+    return;
+  }
 
   isPlayingAudio = true;
   const { url, agentId } = audioQueue.shift();
@@ -1936,6 +1960,9 @@ window.toggleCallIn = function() {
   }
 }
 
+// Track if we're muted while speaking
+let isMutedWhileSpeaking = false;
+
 function startCallIn() {
   // Check browser support
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1955,7 +1982,9 @@ function startCallIn() {
   speechRecognition.onstart = () => {
     isCalledIn = true;
     updateCallInUI(true);
-    console.log('[CallIn] Speech recognition started');
+    // Mute agent audio while we're on air
+    muteAgentAudio(true);
+    console.log('[CallIn] Speech recognition started - agents muted');
   };
   
   speechRecognition.onresult = (event) => {
@@ -2033,20 +2062,43 @@ function stopCallIn() {
     speechRecognition.stop();
     speechRecognition = null;
   }
+  // Unmute agent audio when we hang up
+  muteAgentAudio(false);
   updateCallInUI(false);
-  console.log('[CallIn] Stopped');
+  console.log('[CallIn] Stopped - agents unmuted');
+}
+
+// Mute/unmute agent audio playback
+function muteAgentAudio(mute) {
+  isMutedWhileSpeaking = mute;
+  if (mute) {
+    // Stop current audio and clear queue
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+    // Keep the queue but don't play - we'll resume later
+    console.log('[Audio] Muted - queue has', audioQueue.length, 'items');
+  } else {
+    // Resume playing if there are items in queue
+    console.log('[Audio] Unmuted - resuming playback');
+    if (audioQueue.length > 0 && !isPlayingAudio) {
+      processAudioQueue();
+    }
+  }
 }
 
 function updateCallInUI(isActive) {
   const btn = document.getElementById('call-in-btn');
   const humanSection = document.getElementById('human-caller-section');
+  const modal = document.querySelector('.live-modal');
   
   if (btn) {
     if (isActive) {
       btn.classList.add('active');
       btn.innerHTML = `
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
-        <span>On Air</span>
+        <span>Hang Up</span>
       `;
     } else {
       btn.classList.remove('active');
@@ -2059,6 +2111,19 @@ function updateCallInUI(isActive) {
   
   if (humanSection) {
     humanSection.style.display = isActive ? 'block' : 'none';
+  }
+  
+  // Show/hide "on air" banner
+  if (modal) {
+    const existingBanner = modal.querySelector('.on-air-banner');
+    if (isActive && !existingBanner) {
+      const banner = document.createElement('div');
+      banner.className = 'on-air-banner';
+      banner.innerHTML = '🎙️ YOU ARE ON AIR - Agents muted while you speak';
+      modal.insertBefore(banner, modal.firstChild);
+    } else if (!isActive && existingBanner) {
+      existingBanner.remove();
+    }
   }
 }
 

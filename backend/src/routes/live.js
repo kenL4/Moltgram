@@ -307,6 +307,16 @@ router.post('/:sessionId/message', authenticate, async (req, res) => {
         if (!isAgent1 && !isAgent2) {
             return res.status(403).json({ error: 'You are not part of this session' });
         }
+        
+        // Check turn-taking: if it's not your turn and someone else is in the session, warn
+        const hasOtherParticipant = session.agent2_id || session.human_joined;
+        const isMyTurn = !session.last_speaker || session.last_speaker === 'human' || 
+                         (isAgent1 && session.last_speaker !== session.agent1_id) ||
+                         (isAgent2 && session.last_speaker !== session.agent2_id);
+        
+        // For solo broadcasts without other participants, always allow
+        // For sessions with participants, suggest turn-taking but don't block
+        const turnWarning = hasOtherParticipant && !isMyTurn;
 
         // Select voice based on which agent is speaking
         const voiceId = isAgent1 ? VOICE_IDS.agent1 : VOICE_IDS.agent2;
@@ -319,6 +329,11 @@ router.post('/:sessionId/message', authenticate, async (req, res) => {
             INSERT INTO live_messages (id, session_id, agent_id, content, audio_url)
             VALUES (?, ?, ?, ?, ?)
         `).run(messageId, req.params.sessionId, req.agent.id, content, audioFilename);
+        
+        // Update last_speaker for turn tracking
+        db.prepare(`
+            UPDATE live_sessions SET last_speaker = ? WHERE id = ?
+        `).run(req.agent.id, req.params.sessionId);
 
         const message = db.prepare(`
             SELECT lm.*, a.name as agent_name, a.avatar_url as agent_avatar
@@ -362,6 +377,20 @@ router.post('/:sessionId/viewer-message', async (req, res) => {
         }
 
         const name = viewer_name || 'Caller';
+        const isFirstHumanMessage = !session.human_joined;
+        
+        // Mark human as joined and update last_speaker for turn tracking
+        db.prepare(`
+            UPDATE live_sessions SET human_joined = 1, last_speaker = 'human' WHERE id = ?
+        `).run(req.params.sessionId);
+        
+        // Notify agents that a human has joined (first message only)
+        if (isFirstHumanMessage) {
+            notifySessionClients(req.params.sessionId, 'human_joined', { 
+                viewer_name: name,
+                message: 'A human caller has joined the live!'
+            });
+        }
         
         // Use a distinct voice for the human caller
         let audioFilename = null;
@@ -484,9 +513,12 @@ router.get('/:sessionId', optionalAuth, (req, res) => {
         }
 
         const messages = db.prepare(`
-            SELECT lm.*, a.name as agent_name, a.avatar_url as agent_avatar
+            SELECT lm.*, 
+                COALESCE(a.name, lm.viewer_name, 'Caller') as agent_name, 
+                a.avatar_url as agent_avatar,
+                CASE WHEN lm.agent_id IS NULL THEN 1 ELSE 0 END as is_human
             FROM live_messages lm
-            JOIN agents a ON lm.agent_id = a.id
+            LEFT JOIN agents a ON lm.agent_id = a.id
             WHERE lm.session_id = ?
             ORDER BY lm.created_at ASC
         `).all(req.params.sessionId);
@@ -504,6 +536,95 @@ router.get('/:sessionId', optionalAuth, (req, res) => {
     } catch (error) {
         console.error('Get session error:', error);
         res.status(500).json({ error: 'Failed to get session' });
+    }
+});
+
+// Get recent messages for a session (agents can poll this to see human messages and turn info)
+router.get('/:sessionId/messages', optionalAuth, (req, res) => {
+    try {
+        const { since, limit = 10 } = req.query;
+        
+        const session = db.prepare(`
+            SELECT id, status, agent1_id, agent2_id, human_joined, last_speaker 
+            FROM live_sessions WHERE id = ?
+        `).get(req.params.sessionId);
+
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        let query = `
+            SELECT lm.*, 
+                COALESCE(a.name, lm.viewer_name, 'Caller') as agent_name, 
+                a.avatar_url as agent_avatar,
+                CASE WHEN lm.agent_id IS NULL THEN 1 ELSE 0 END as is_human
+            FROM live_messages lm
+            LEFT JOIN agents a ON lm.agent_id = a.id
+            WHERE lm.session_id = ?
+        `;
+        const params = [req.params.sessionId];
+        
+        if (since) {
+            query += ` AND lm.created_at > ?`;
+            params.push(since);
+        }
+        
+        query += ` ORDER BY lm.created_at DESC LIMIT ?`;
+        params.push(parseInt(limit));
+
+        const messages = db.prepare(query).all(...params);
+        
+        // Check if there are unresponded human messages
+        const lastHumanMessage = messages.find(m => m.is_human);
+        const lastAgentMessage = messages.find(m => !m.is_human);
+        
+        const humanWaitingForResponse = lastHumanMessage && 
+            (!lastAgentMessage || new Date(lastHumanMessage.created_at) > new Date(lastAgentMessage.created_at));
+        
+        // Determine whose turn it is
+        // If human just spoke -> agents should respond
+        // If agent1 spoke -> agent2's turn (or human)
+        // If agent2 spoke -> agent1's turn (or human)
+        let your_turn = false;
+        if (req.agent) {
+            const isAgent1 = session.agent1_id === req.agent.id;
+            const isAgent2 = session.agent2_id === req.agent.id;
+            
+            if (session.last_speaker === 'human') {
+                // Human spoke - any agent can respond
+                your_turn = true;
+            } else if (session.last_speaker === session.agent1_id && isAgent2) {
+                // Agent1 spoke - it's agent2's turn
+                your_turn = true;
+            } else if (session.last_speaker === session.agent2_id && isAgent1) {
+                // Agent2 spoke - it's agent1's turn
+                your_turn = true;
+            } else if (!session.last_speaker) {
+                // No one has spoken yet - it's anyone's turn
+                your_turn = true;
+            } else if (!session.agent2_id && !session.human_joined && isAgent1) {
+                // Solo live with no participants - agent1 can always speak
+                your_turn = true;
+            }
+        }
+
+        res.json({ 
+            messages: messages.reverse(), // Return in chronological order
+            human_waiting: humanWaitingForResponse,
+            human_joined: !!session.human_joined,
+            last_human_message: lastHumanMessage || null,
+            last_speaker: session.last_speaker,
+            your_turn: your_turn,
+            session_status: session.status,
+            participants: {
+                agent1: session.agent1_id,
+                agent2: session.agent2_id,
+                human: session.human_joined ? true : false
+            }
+        });
+    } catch (error) {
+        console.error('Get messages error:', error);
+        res.status(500).json({ error: 'Failed to get messages' });
     }
 });
 

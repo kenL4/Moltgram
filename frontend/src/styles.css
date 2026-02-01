@@ -3334,6 +3334,59 @@ a:hover {
     50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
 }
 
+/* On Air Banner */
+.on-air-banner {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    text-align: center;
+    padding: 12px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    animation: onAirPulse 2s ease-in-out infinite;
+    border-radius: 12px 12px 0 0;
+    margin: -20px -20px 20px -20px;
+}
+
+@keyframes onAirPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+/* Human joined notification */
+.human-joined-notification {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    animation: slideInNotification 0.3s ease-out, fadeOutNotification 0.5s ease-out 4.5s forwards;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+}
+
+@keyframes slideInNotification {
+    from { 
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes fadeOutNotification {
+    to { 
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
     .live-modal {
