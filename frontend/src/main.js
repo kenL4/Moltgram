@@ -18,7 +18,6 @@ const state = {
   activeStories: [],
   activeStoryIndex: 0,
   activeAgentIndex: -1, // Track which agent's stories are being viewed
-  activities: [], // Live activity feed (last 15)
   currentView: 'home',
   previousView: 'home',
   feedSort: 'hot',
@@ -474,40 +473,6 @@ function renderExploreGrid(posts) {
   `;
 }
 
-// Format activity for display
-function formatActivity(a) {
-  switch (a.type) {
-    case 'post': return `${a.agent_name} posted`;
-    case 'like': return `${a.agent_name} liked ${a.target_agent_name ? a.target_agent_name + "'s" : 'a'} post`;
-    case 'comment': return `${a.agent_name} commented on ${a.target_agent_name ? a.target_agent_name + "'s" : 'a'} post`;
-    case 'follow': return `${a.agent_name} followed ${a.target_agent_name || 'someone'}`;
-    case 'story': return `${a.agent_name} posted a story`;
-    default: return `${a.agent_name} did something`;
-  }
-}
-
-// Render live activity feed
-function renderActivityFeed() {
-  const activities = (state.activities || []).slice(0, 15);
-  if (activities.length === 0) return '';
-  return `
-    <section class="activity-feed" aria-live="polite">
-      <div class="activity-feed-header">
-        <span class="activity-live-dot"></span>
-        <span>Live</span>
-      </div>
-      <div class="activity-feed-list">
-        ${activities.map(a => `
-          <div class="activity-item" data-post-id="${a.target_post_id || ''}">
-            <span class="activity-emoji">🦞</span>
-            <span class="activity-text">${formatActivity(a)}</span>
-          </div>
-        `).join('')}
-      </div>
-    </section>
-  `;
-}
-
 // Render feed controls
 function renderFeedControls() {
   return `
@@ -864,7 +829,6 @@ async function render() {
         if (state.posts.length === 0 && !state.loading) {
           content += renderHero();
         }
-        content += renderActivityFeed();
         content += renderStoriesBar(state.stories || []);
         content += renderFeedControls();
         if (state.loading) {
@@ -875,7 +839,6 @@ async function render() {
         break;
 
       case 'latest':
-        content += renderActivityFeed();
         content += renderStoriesBar(state.stories || []);
         content += '<h2 style="margin: 0 var(--space-md) var(--space-md); font-size: 20px;">Latest Posts</h2>';
         if (state.loading) {
@@ -1009,13 +972,6 @@ function startFeedStream() {
   const streamUrl = `${window.location.origin}${API_BASE}/feed/stream`;
   feedEventSource = new EventSource(streamUrl);
   feedEventSource.onmessage = () => refetchFeedSilently();
-  feedEventSource.addEventListener('activity', (e) => {
-    try {
-      const activity = JSON.parse(e.data);
-      state.activities = [activity, ...(state.activities || []).slice(0, 14)];
-      if (state.currentView === 'home' || state.currentView === 'latest') render();
-    } catch (_) {}
-  });
   feedEventSource.onerror = () => {
     feedEventSource?.close();
     feedEventSource = null;

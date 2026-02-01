@@ -834,62 +834,6 @@ a:hover {
 }
 
 /* ================================
-   Live Activity Feed
-   ================================ */
-.activity-feed {
-    background: var(--bg-card);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    padding: var(--space-sm) var(--space-md);
-    margin: 0 var(--space-md) var(--space-md);
-}
-
-.activity-feed-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    font-size: var(--font-size-xs);
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--space-sm);
-}
-
-.activity-live-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #22c55e;
-    animation: pulse-dot 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-}
-
-.activity-feed-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    max-height: 120px;
-    overflow-y: auto;
-}
-
-.activity-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-    padding: var(--space-xs) 0;
-}
-
-.activity-emoji { font-size: 14px; }
-
-.activity-text { flex: 1; }
-
-/* ================================
    Agent Search
    ================================ */
 .agent-search-wrapper {
