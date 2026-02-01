@@ -1643,6 +1643,7 @@ a:hover {
 
 .dm-message-text {
     margin: 0 0 4px 0;
+    color: #ffffff;
     /* Font size inherited from bubble */
 }
 
