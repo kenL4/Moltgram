@@ -147,6 +147,22 @@ function getInitials(name) {
   return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().substring(0, 2);
 }
 
+// Robot avatars from seeded data - used as defaults for live sessions when no avatar is set
+const ROBOT_AVATARS = [
+  'https://api.dicebear.com/7.x/bottts/svg?seed=ArtBot',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Poetica',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=LogicCore',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Chaos',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Zen'
+];
+
+function getDefaultAvatar(seed) {
+  if (!seed) return ROBOT_AVATARS[Math.floor(Math.random() * ROBOT_AVATARS.length)];
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = ((hash << 5) - hash) + seed.charCodeAt(i) | 0;
+  return ROBOT_AVATARS[Math.abs(hash) % ROBOT_AVATARS.length];
+}
+
 // SVG Icons
 function getIcon(name, active = false) {
   const icons = {
@@ -1759,14 +1775,15 @@ function updateLiveMessages() {
   if (!session) return;
 
   container.innerHTML = state.liveMessages.map(msg => {
-    const initials = getInitials(msg.agent_name || 'AI');
+    const avatar = msg.is_human
+      ? null
+      : (msg.agent_avatar || getDefaultAvatar(msg.agent_id));
     return `
       <div class="live-message" data-message-id="${msg.id}">
         <div class="live-message-avatar">
-          ${msg.agent_avatar
-        ? `<img src="${msg.agent_avatar}" alt="${msg.agent_name}">`
-        : initials
-      }
+          ${avatar
+        ? `<img src="${avatar}" alt="${msg.agent_name}">`
+        : getInitials(msg.agent_name || '?')}
         </div>
         <div class="live-message-content">
           <div class="live-message-author">${msg.agent_name}</div>
@@ -1793,8 +1810,10 @@ function renderLiveModal() {
     document.body.appendChild(modal);
   }
 
-  const initials1 = getInitials(session.agent1_name || 'AI');
-  const initials2 = session.agent2_name ? getInitials(session.agent2_name) : '?';
+  const avatar1 = session.agent1_avatar || getDefaultAvatar(session.agent1_id);
+  const avatar2 = session.agent2_id
+    ? (session.agent2_avatar || getDefaultAvatar(session.agent2_id))
+    : null;
 
   const isWaiting = session.status === 'waiting';
   const isEnded = session.status === 'ended';
@@ -1819,10 +1838,7 @@ function renderLiveModal() {
           <div class="live-participant-large" data-agent-id="${session.agent1_id}">
             <div class="live-avatar-ring ${(isLive || isWaiting) ? 'pulsing' : ''}">
               <div class="live-avatar-large">
-                ${session.agent1_avatar
-      ? `<img src="${session.agent1_avatar}" alt="${session.agent1_name}">`
-      : initials1
-    }
+                <img src="${avatar1}" alt="${session.agent1_name}">
               </div>
             </div>
             <div class="live-participant-name-large">${session.agent1_name}</div>
@@ -1839,10 +1855,7 @@ function renderLiveModal() {
             <div class="live-participant-large" data-agent-id="${session.agent2_id}">
               <div class="live-avatar-ring ${isLive ? 'pulsing' : ''}">
                 <div class="live-avatar-large">
-                  ${session.agent2_avatar
-        ? `<img src="${session.agent2_avatar}" alt="${session.agent2_name}">`
-        : initials2
-      }
+                  <img src="${avatar2}" alt="${session.agent2_name}">
                 </div>
               </div>
               <div class="live-participant-name-large">${session.agent2_name}</div>
