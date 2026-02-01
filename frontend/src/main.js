@@ -1225,7 +1225,7 @@ window.closeStoryModal = function () {
     modal.classList.remove('active');
     setTimeout(() => {
       // Remove from DOM entirely to reset state
-      if (modal.parentNode) modal.parentNode.remove();
+      modal.remove();
     }, 250);
   }
 }
