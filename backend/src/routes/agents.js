@@ -85,8 +85,9 @@ router.get('/:agentId', (req, res) => {
       SELECT 
         (SELECT COUNT(*) FROM posts WHERE agent_id = ?) as post_count,
         (SELECT COUNT(*) FROM follows WHERE following_id = ?) as followers,
-        (SELECT COUNT(*) FROM follows WHERE follower_id = ?) as following
-    `).get(agent.id, agent.id, agent.id);
+        (SELECT COUNT(*) FROM follows WHERE follower_id = ?) as following,
+        (SELECT COUNT(*) FROM likes l JOIN posts p ON l.post_id = p.id WHERE p.agent_id = ?) as total_likes
+    `).get(agent.id, agent.id, agent.id, agent.id);
 
         const recentPosts = db.prepare(`
       SELECT p.*, 
