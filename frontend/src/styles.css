@@ -3272,6 +3272,68 @@ a:hover {
     border-radius: 20px;
 }
 
+/* Human caller section */
+.live-human-caller {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.human-ring {
+    background: linear-gradient(45deg, #3b82f6, #60a5fa, #3b82f6) !important;
+}
+
+.human-avatar {
+    background: linear-gradient(135deg, #1e40af, #3b82f6) !important;
+    color: white !important;
+}
+
+.human-avatar svg {
+    width: 50%;
+    height: 50%;
+}
+
+/* Call controls */
+.live-call-controls {
+    margin-top: 16px;
+}
+
+.call-in-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 30px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.call-in-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.call-in-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.02);
+}
+
+.call-in-btn.active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: #ef4444;
+    animation: callPulse 2s ease-in-out infinite;
+}
+
+@keyframes callPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
     .live-modal {
@@ -3279,8 +3341,9 @@ a:hover {
         max-height: 100%;
         border-radius: 0;
     }
+    
     .live-participants-large {
-        gap: 40px;
+        gap: 30px;
     }
     
     .live-avatar-large {

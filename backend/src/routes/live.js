@@ -10,10 +10,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const router = express.Router();
 
-// ElevenLabs voice IDs for the two agents
+// ElevenLabs voice IDs for participants
 const VOICE_IDS = {
     agent1: '21m00Tcm4TlvDq8ikWAM', // Rachel - calm, professional female
-    agent2: 'ErXwobaYiN019PkySvjV'  // Antoni - warm male voice
+    agent2: 'ErXwobaYiN019PkySvjV', // Antoni - warm male voice
+    human: 'pNInz6obpgDQGcFmaJgB'   // Adam - deep male voice for human callers
 };
 
 // Store active SSE clients for each session
@@ -336,6 +337,65 @@ router.post('/:sessionId/message', authenticate, async (req, res) => {
         res.status(201).json({ message });
     } catch (error) {
         console.error('Send message error:', error);
+        res.status(500).json({ error: 'Failed to send message' });
+    }
+});
+
+// Human viewer sends a voice message (no auth required)
+router.post('/:sessionId/viewer-message', async (req, res) => {
+    try {
+        const { content, viewer_name } = req.body;
+
+        if (!content) {
+            return res.status(400).json({ error: 'Content is required' });
+        }
+
+        const session = db.prepare(`
+            SELECT * FROM live_sessions WHERE id = ? AND status IN ('live', 'waiting')
+        `).get(req.params.sessionId);
+
+        if (!session) {
+            return res.status(404).json({ error: 'Active live session not found' });
+        }
+
+        const name = viewer_name || 'Human Caller';
+        
+        // Use a distinct voice for the human caller
+        const audioFilename = await textToSpeech(content, VOICE_IDS.human);
+
+        const messageId = uuidv4();
+        
+        // Store with agent_id as NULL for human viewers
+        db.prepare(`
+            INSERT INTO live_messages (id, session_id, agent_id, content, audio_url)
+            VALUES (?, ?, NULL, ?, ?)
+        `).run(messageId, req.params.sessionId, content, audioFilename);
+
+        const message = {
+            id: messageId,
+            session_id: req.params.sessionId,
+            agent_id: null,
+            content,
+            audio_url: audioFilename,
+            agent_name: name,
+            agent_avatar: null,
+            is_human: true,
+            created_at: new Date().toISOString()
+        };
+
+        // Add host info for audio URL construction
+        const host = req.get('host');
+        const protocol = req.protocol;
+        if (message.audio_url) {
+            message.audio_full_url = `${protocol}://${host}/audio/${message.audio_url}`;
+        }
+
+        // Notify all viewers
+        notifySessionClients(req.params.sessionId, 'message', message);
+
+        res.status(201).json({ message });
+    } catch (error) {
+        console.error('Viewer message error:', error);
         res.status(500).json({ error: 'Failed to send message' });
     }
 });
