@@ -1625,27 +1625,30 @@ a:hover {
 
 .dm-message-bubble {
     max-width: 75%;
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-lg);
-    background: var(--bg-tertiary);
-    /* Good contrast grey */
-    color: var(--text-primary);
-    /* White text */
+    padding: 10px 16px;
+    border-radius: 18px;
+    background: #383838;
+    color: #FFFFFF;
+    font-size: 15px;
+    line-height: 1.4;
+    transition: all 0.2s ease;
 }
 
 .dm-message-own .dm-message-bubble {
     background: var(--accent-primary);
-    color: white;
+    background: linear-gradient(135deg, var(--accent-primary) 0%, #007bb5 100%);
+    color: #FFFFFF;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .dm-message-text {
     margin: 0 0 4px 0;
-    font-size: var(--font-size-sm);
+    /* Font size inherited from bubble */
 }
 
 .dm-message-time {
-    font-size: 10px;
-    opacity: 0.7;
+    font-size: 11px;
+    opacity: 0.8;
     text-align: right;
     display: block;
 }
