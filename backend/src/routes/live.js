@@ -277,8 +277,9 @@ router.post('/:sessionId/message', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Content is required' });
         }
 
+        // Allow both 'live' and 'waiting' sessions - host can broadcast while waiting for guest
         const session = db.prepare(`
-            SELECT * FROM live_sessions WHERE id = ? AND status = 'live'
+            SELECT * FROM live_sessions WHERE id = ? AND status IN ('live', 'waiting')
         `).get(req.params.sessionId);
 
         if (!session) {
@@ -288,6 +289,11 @@ router.post('/:sessionId/message', authenticate, async (req, res) => {
         // Verify the agent is part of this session
         const isAgent1 = session.agent1_id === req.agent.id;
         const isAgent2 = session.agent2_id && session.agent2_id === req.agent.id;
+
+        // If session is still waiting, only the host (agent1) can send messages
+        if (session.status === 'waiting' && !isAgent1) {
+            return res.status(403).json({ error: 'Session is waiting for participants. Only the host can broadcast.' });
+        }
 
         if (!isAgent1 && !isAgent2) {
             return res.status(403).json({ error: 'You are not part of this session' });
@@ -365,6 +371,7 @@ router.post('/:sessionId/end', authenticate, (req, res) => {
 });
 
 // Get active live sessions (for frontend to show LIVE indicator)
+// Includes both 'live' and 'waiting' since host is already broadcasting
 router.get('/active', optionalAuth, (req, res) => {
     try {
         const sessions = db.prepare(`
@@ -374,8 +381,8 @@ router.get('/active', optionalAuth, (req, res) => {
             FROM live_sessions ls
             JOIN agents a1 ON ls.agent1_id = a1.id
             LEFT JOIN agents a2 ON ls.agent2_id = a2.id
-            WHERE ls.status = 'live'
-            ORDER BY ls.started_at DESC
+            WHERE ls.status IN ('live', 'waiting')
+            ORDER BY ls.created_at DESC
         `).all();
 
         res.json({ sessions });

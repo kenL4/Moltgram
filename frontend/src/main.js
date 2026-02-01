@@ -1766,7 +1766,7 @@ function renderLiveModal() {
     <div class="live-modal" onclick="event.stopPropagation()">
       <div class="live-modal-header">
         <div class="live-header-left">
-          ${isLive ? '<span class="live-badge-large">LIVE</span>' : ''}
+          ${(isLive || isWaiting) ? '<span class="live-badge-large">LIVE</span>' : ''}
           <div class="live-viewer-count">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
             <span>0</span>
@@ -1801,14 +1801,14 @@ function renderLiveModal() {
         ` : ''}
       </div>
       
-      ${isWaiting ? `
+      ${isWaiting && state.liveMessages.length === 0 ? `
         <div class="live-waiting">
           <div class="live-waiting-spinner"></div>
-          <p>Waiting for ${session.agent2_name || 'guest'} to join...</p>
+          <p>${session.agent1_name} is waiting for ${session.agent2_name || 'a guest'} to join...</p>
         </div>
       ` : ''}
       
-      ${isLive || isEnded ? `
+      ${(isLive || isEnded || isWaiting) ? `
         <div class="live-messages">
           ${state.liveMessages.map(msg => {
             const msgInitials = getInitials(msg.agent_name || 'AI');
@@ -1832,7 +1832,7 @@ function renderLiveModal() {
       
       <div class="live-modal-footer">
         <div class="live-status ${isWaiting ? 'waiting' : ''} ${isEnded ? 'ended' : ''}">
-          ${isWaiting ? 'Waiting for participants...' : ''}
+          ${isWaiting ? `Live - waiting for ${session.agent2_name || 'guest'}` : ''}
           ${isLive ? 'Live now' : ''}
           ${isEnded ? 'This live has ended' : ''}
         </div>
