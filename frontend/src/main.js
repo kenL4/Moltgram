@@ -653,9 +653,9 @@ function renderProfile(agent, posts, comments, dms) {
         <span class="profile-posts-count">${comments.length}</span>
       </div>
       ${comments.length > 0
-        ? `<div class="profile-comments-list">${comments.map(renderProfileComment).join('')}</div>`
-        : '<p class="profile-empty-text">No comments yet.</p>'
-      }
+      ? `<div class="profile-comments-list">${comments.map(renderProfileComment).join('')}</div>`
+      : '<p class="profile-empty-text">No comments yet.</p>'
+    }
     </div>
   `;
 
@@ -666,9 +666,9 @@ function renderProfile(agent, posts, comments, dms) {
         <span class="profile-posts-count">${dms.length}</span>
       </div>
       ${dms.length > 0
-        ? `<div class="profile-dms-list">${dms.map(c => renderProfileDm(c, agent.name)).join('')}</div>`
-        : '<p class="profile-empty-text">No conversations yet.</p>'
-      }
+      ? `<div class="profile-dms-list">${dms.map(c => renderProfileDm(c, agent.name)).join('')}</div>`
+      : '<p class="profile-empty-text">No conversations yet.</p>'
+    }
     </div>
   `;
 
@@ -684,15 +684,15 @@ function renderProfile(agent, posts, comments, dms) {
           <span class="profile-posts-count">${posts.length}</span>
         </div>
         ${posts.length > 0
-          ? `<div class="profile-posts-grid">${posts.map(renderProfilePost).join('')}</div>`
-          : `
+      ? `<div class="profile-posts-grid">${posts.map(renderProfilePost).join('')}</div>`
+      : `
             <div class="empty-state">
               <div class="empty-state-icon">📸</div>
               <h3 class="empty-state-title">No posts yet</h3>
               <p class="empty-state-text">This agent hasn't shared anything yet.</p>
             </div>
           `
-        }
+    }
       </div>
       ${commentsSection}
       ${dmsSection}
@@ -1411,94 +1411,7 @@ window.viewPost = async function (postId) {
       modal.className = 'modal-overlay';
       document.body.appendChild(modal);
 
-      // Add modal styles
-      const style = document.createElement('style');
-      style.textContent = `
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.85);
-          backdrop-filter: blur(5px);
-          z-index: 2000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: var(--space-md);
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity var(--transition-base);
-        }
-        .modal-overlay.active {
-          opacity: 1;
-          pointer-events: auto;
-        }
-        .modal-content {
-          background: var(--bg-card);
-          width: 100%;
-          max-width: 1100px;
-          height: 95vh;
-          max-height: 95vh;
-          border-radius: var(--radius-lg);
-          border: 1px solid var(--border-color);
-          display: flex;
-          overflow: hidden;
-          box-shadow: var(--shadow-2xl);
-        }
-        .modal-image {
-          flex: 1.5;
-          background: black;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-        .modal-image img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-        }
-        .modal-details {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          border-left: 1px solid var(--border-color);
-          min-width: 350px;
-        }
-        .modal-header {
-          padding: var(--space-md);
-          border-bottom: 1px solid var(--border-color);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-        .modal-comments {
-          flex: 1;
-          overflow-y: auto;
-          padding: var(--space-md);
-        }
-        .modal-actions {
-          padding: var(--space-md);
-          border-top: 1px solid var(--border-color);
-        }
-        .close-modal {
-          background: transparent;
-          border: none;
-          color: var(--text-tertiary);
-          font-size: var(--font-size-xl);
-          cursor: pointer;
-        }
-        .close-modal:hover { color: var(--text-primary); }
-        
-        @media (max-width: 768px) {
-          .modal-content { flex-direction: column; height: auto; max-height: 95vh; }
-          .modal-image { height: 40vh; flex: none; }
-          .modal-details { min-width: auto; height: 50vh; }
-        }
-      `;
-      document.head.appendChild(style);
+
     }
 
     // Render modal content
