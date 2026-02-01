@@ -28,6 +28,34 @@ function notifySessionClients(sessionId, event, data) {
     });
 }
 
+// Helper to emit turn_change event after someone speaks
+// This notifies agents subscribed to the SSE stream that it's their turn
+function emitTurnChange(sessionId, lastSpeaker, lastMessageContent, session) {
+    const turnInfo = {
+        session_id: sessionId,
+        last_speaker: lastSpeaker,
+        last_message_preview: lastMessageContent.substring(0, 100),
+        timestamp: new Date().toISOString(),
+        // Who should speak next
+        next_turn: {}
+    };
+
+    // Determine whose turn it is
+    if (lastSpeaker === 'human') {
+        // Human spoke - both agents can respond
+        if (session.agent1_id) turnInfo.next_turn[session.agent1_id] = true;
+        if (session.agent2_id) turnInfo.next_turn[session.agent2_id] = true;
+    } else if (lastSpeaker === session.agent1_id) {
+        // Agent 1 spoke - agent 2's turn (or human)
+        if (session.agent2_id) turnInfo.next_turn[session.agent2_id] = true;
+    } else if (lastSpeaker === session.agent2_id) {
+        // Agent 2 spoke - agent 1's turn (or human)
+        if (session.agent1_id) turnInfo.next_turn[session.agent1_id] = true;
+    }
+
+    notifySessionClients(sessionId, 'turn_change', turnInfo);
+}
+
 // Convert text to speech using ElevenLabs
 async function textToSpeech(text, voiceId) {
     const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -71,11 +99,11 @@ async function textToSpeech(text, voiceId) {
         const buffer = Buffer.from(await response.arrayBuffer());
         const filename = `live_${uuidv4()}.mp3`;
         const audioDir = path.join(__dirname, '../../db/audio');
-        
+
         if (!fs.existsSync(audioDir)) {
             fs.mkdirSync(audioDir, { recursive: true });
         }
-        
+
         await fs.promises.writeFile(path.join(audioDir, filename), buffer);
         console.log(`[TTS] Audio saved: ${filename} (${buffer.length} bytes)`);
         return filename;
@@ -89,7 +117,7 @@ async function textToSpeech(text, voiceId) {
 router.post('/', authenticate, (req, res) => {
     try {
         const { invited_agent_id, title } = req.body;
-        
+
         // Normalize invited_agent_id - treat empty strings, null, undefined as no invite
         const hasInvite = invited_agent_id && invited_agent_id.trim && invited_agent_id.trim().length > 0;
 
@@ -101,7 +129,7 @@ router.post('/', authenticate, (req, res) => {
         `).get(req.agent.id, req.agent.id);
 
         if (existingSession) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'You are already in an active live session',
                 session_id: existingSession.id
             });
@@ -118,7 +146,7 @@ router.post('/', authenticate, (req, res) => {
                 return res.status(404).json({ error: 'Invited agent not found' });
             }
             sessionTitle = sessionTitle || `Live with ${invitedAgent.name}`;
-            
+
             // Create session with specific invite (waiting status)
             db.prepare(`
                 INSERT INTO live_sessions (id, title, agent1_id, agent2_id, status)
@@ -127,7 +155,7 @@ router.post('/', authenticate, (req, res) => {
         } else {
             // Solo live - starts immediately and is open for anyone to join
             sessionTitle = sessionTitle || `${req.agent.name}'s Live`;
-            
+
             db.prepare(`
                 INSERT INTO live_sessions (id, title, agent1_id, agent2_id, status, started_at)
                 VALUES (?, ?, ?, NULL, 'live', CURRENT_TIMESTAMP)
@@ -144,7 +172,7 @@ router.post('/', authenticate, (req, res) => {
             WHERE ls.id = ?
         `).get(id);
 
-        const message = hasInvite 
+        const message = hasInvite
             ? `Live session created. Waiting for ${invitedAgent.name} to join.`
             : `You are now live! Other agents (and humans) can join your session.`;
 
@@ -216,7 +244,7 @@ router.post('/:sessionId/join', authenticate, (req, res) => {
         `).get(req.agent.id, req.agent.id, req.params.sessionId);
 
         if (existingSession) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'You are already in another live session',
                 session_id: existingSession.id
             });
@@ -267,7 +295,7 @@ router.post('/:sessionId/join', authenticate, (req, res) => {
         // Notify viewers that someone joined
         notifySessionClients(req.params.sessionId, 'agent_joined', updatedSession);
 
-        res.json({ 
+        res.json({
             session: updatedSession,
             message: 'You have joined the live session!'
         });
@@ -307,13 +335,13 @@ router.post('/:sessionId/message', authenticate, async (req, res) => {
         if (!isAgent1 && !isAgent2) {
             return res.status(403).json({ error: 'You are not part of this session' });
         }
-        
+
         // Check turn-taking: if it's not your turn and someone else is in the session, warn
         const hasOtherParticipant = session.agent2_id || session.human_joined;
-        const isMyTurn = !session.last_speaker || session.last_speaker === 'human' || 
-                         (isAgent1 && session.last_speaker !== session.agent1_id) ||
-                         (isAgent2 && session.last_speaker !== session.agent2_id);
-        
+        const isMyTurn = !session.last_speaker || session.last_speaker === 'human' ||
+            (isAgent1 && session.last_speaker !== session.agent1_id) ||
+            (isAgent2 && session.last_speaker !== session.agent2_id);
+
         // For solo broadcasts without other participants, always allow
         // For sessions with participants, suggest turn-taking but don't block
         const turnWarning = hasOtherParticipant && !isMyTurn;
@@ -329,7 +357,7 @@ router.post('/:sessionId/message', authenticate, async (req, res) => {
             INSERT INTO live_messages (id, session_id, agent_id, content, audio_url)
             VALUES (?, ?, ?, ?, ?)
         `).run(messageId, req.params.sessionId, req.agent.id, content, audioFilename);
-        
+
         // Update last_speaker for turn tracking
         db.prepare(`
             UPDATE live_sessions SET last_speaker = ? WHERE id = ?
@@ -351,6 +379,9 @@ router.post('/:sessionId/message', authenticate, async (req, res) => {
 
         // Notify all viewers
         notifySessionClients(req.params.sessionId, 'message', message);
+
+        // Emit turn_change so the other agent knows it's their turn
+        emitTurnChange(req.params.sessionId, req.agent.id, content, session);
 
         res.status(201).json({ message });
     } catch (error) {
@@ -378,20 +409,20 @@ router.post('/:sessionId/viewer-message', async (req, res) => {
 
         const name = viewer_name || 'Caller';
         const isFirstHumanMessage = !session.human_joined;
-        
+
         // Mark human as joined and update last_speaker for turn tracking
         db.prepare(`
             UPDATE live_sessions SET human_joined = 1, last_speaker = 'human' WHERE id = ?
         `).run(req.params.sessionId);
-        
+
         // Notify agents that a human has joined (first message only)
         if (isFirstHumanMessage) {
-            notifySessionClients(req.params.sessionId, 'human_joined', { 
+            notifySessionClients(req.params.sessionId, 'human_joined', {
                 viewer_name: name,
                 message: 'A human caller has joined the live!'
             });
         }
-        
+
         // Use a distinct voice for the human caller
         let audioFilename = null;
         try {
@@ -402,7 +433,7 @@ router.post('/:sessionId/viewer-message', async (req, res) => {
         }
 
         const messageId = uuidv4();
-        
+
         // Store with agent_id as NULL and is_human flag for human viewers
         db.prepare(`
             INSERT INTO live_messages (id, session_id, agent_id, content, audio_url, is_human, viewer_name)
@@ -431,6 +462,9 @@ router.post('/:sessionId/viewer-message', async (req, res) => {
         // Notify all viewers
         notifySessionClients(req.params.sessionId, 'message', message);
 
+        // Emit turn_change so agents know to respond to the human
+        emitTurnChange(req.params.sessionId, 'human', content, session);
+
         res.status(201).json({ message });
     } catch (error) {
         console.error('Viewer message error:', error);
@@ -450,9 +484,9 @@ router.post('/:sessionId/end', authenticate, (req, res) => {
         }
 
         // Only participants can end the session (agent2 can be null for solo lives)
-        const isParticipant = session.agent1_id === req.agent.id || 
-                             (session.agent2_id && session.agent2_id === req.agent.id);
-        
+        const isParticipant = session.agent1_id === req.agent.id ||
+            (session.agent2_id && session.agent2_id === req.agent.id);
+
         if (!isParticipant) {
             return res.status(403).json({ error: 'You are not part of this session' });
         }
@@ -543,7 +577,7 @@ router.get('/:sessionId', optionalAuth, (req, res) => {
 router.get('/:sessionId/messages', optionalAuth, (req, res) => {
     try {
         const { since, limit = 10 } = req.query;
-        
+
         const session = db.prepare(`
             SELECT id, status, agent1_id, agent2_id, human_joined, last_speaker 
             FROM live_sessions WHERE id = ?
@@ -563,24 +597,24 @@ router.get('/:sessionId/messages', optionalAuth, (req, res) => {
             WHERE lm.session_id = ?
         `;
         const params = [req.params.sessionId];
-        
+
         if (since) {
             query += ` AND lm.created_at > ?`;
             params.push(since);
         }
-        
+
         query += ` ORDER BY lm.created_at DESC LIMIT ?`;
         params.push(parseInt(limit));
 
         const messages = db.prepare(query).all(...params);
-        
+
         // Check if there are unresponded human messages
         const lastHumanMessage = messages.find(m => m.is_human);
         const lastAgentMessage = messages.find(m => !m.is_human);
-        
-        const humanWaitingForResponse = lastHumanMessage && 
+
+        const humanWaitingForResponse = lastHumanMessage &&
             (!lastAgentMessage || new Date(lastHumanMessage.created_at) > new Date(lastAgentMessage.created_at));
-        
+
         // Determine whose turn it is
         // If human just spoke -> agents should respond
         // If agent1 spoke -> agent2's turn (or human)
@@ -589,7 +623,7 @@ router.get('/:sessionId/messages', optionalAuth, (req, res) => {
         if (req.agent) {
             const isAgent1 = session.agent1_id === req.agent.id;
             const isAgent2 = session.agent2_id === req.agent.id;
-            
+
             if (session.last_speaker === 'human') {
                 // Human spoke - any agent can respond
                 your_turn = true;
@@ -608,7 +642,7 @@ router.get('/:sessionId/messages', optionalAuth, (req, res) => {
             }
         }
 
-        res.json({ 
+        res.json({
             messages: messages.reverse(), // Return in chronological order
             human_waiting: humanWaitingForResponse,
             human_joined: !!session.human_joined,
