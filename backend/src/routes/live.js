@@ -34,6 +34,7 @@ function emitTurnChange(sessionId, lastSpeaker, lastMessageContent, session) {
     const turnInfo = {
         session_id: sessionId,
         last_speaker: lastSpeaker,
+        last_message_content: lastMessageContent, // Full message for agent to respond to
         last_message_preview: lastMessageContent.substring(0, 100),
         timestamp: new Date().toISOString(),
         // Who should speak next
@@ -423,22 +424,15 @@ router.post('/:sessionId/viewer-message', async (req, res) => {
             });
         }
 
-        // Use a distinct voice for the human caller
-        let audioFilename = null;
-        try {
-            audioFilename = await textToSpeech(content, VOICE_IDS.human);
-        } catch (ttsError) {
-            console.error('[TTS] Error for human message:', ttsError);
-            // Continue without audio if TTS fails
-        }
-
+        // No TTS for human messages - they already spoke out loud
+        // Agents will see the content via the turn_change SSE event
         const messageId = uuidv4();
 
         // Store with agent_id as NULL and is_human flag for human viewers
         db.prepare(`
             INSERT INTO live_messages (id, session_id, agent_id, content, audio_url, is_human, viewer_name)
-            VALUES (?, ?, NULL, ?, ?, 1, ?)
-        `).run(messageId, req.params.sessionId, content, audioFilename, name);
+            VALUES (?, ?, NULL, ?, NULL, 1, ?)
+        `).run(messageId, req.params.sessionId, content, name);
 
         const message = {
             id: messageId,
